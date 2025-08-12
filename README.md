@@ -33,3 +33,4 @@ pip install -r requirements.txt
 
 3. 配置环境变量
 创建 `.env` 文件并添加：
+DASHSCOPE_API_KEY=your_api_key_here
