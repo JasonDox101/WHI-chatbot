@@ -13,9 +13,9 @@ class WHIConfig:
     DASHSCOPE_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     MODEL_NAME = "qwen3-30b-a3b-instruct-2507"
     
-    # 数据文件路径
-    MESA_DATA_PATH = "c:/Users/dh137/Desktop/work/github/JaosnDox101/WHI/whi_mesa_v2.csv"
-    DATASET_DESC_PATH = "c:/Users/dh137/Desktop/work/github/JaosnDox101/WHI/whi_dataset_desc_with_url.csv"
+    # 数据文件路径 - 修改为相对路径
+    MESA_DATA_PATH = "./whi_mesa_v2.csv"
+    DATASET_DESC_PATH = "./whi_dataset_desc_with_url.csv"
     
     # 向量数据库配置
     VECTOR_STORE_PATH = "./whi_vectorstore"
