@@ -25,23 +25,50 @@ except Exception as e:
 
 # 创建UI
 app_ui = ui.page_fluid(
-    # 引入外部CSS文件 - 修改路径
+    # 引入外部CSS文件
     ui.tags.link(rel="stylesheet", href="styles.css"),
     
-    # 顶部标题区域
+    # 顶部标题区域 - 保持原样
     ui.div(
         {"class": "top-header"},
-        ui.h2("🧠 WHI 数据问答助手"),
-        ui.p("询问 WHI 变量、数据集或研究方法相关问题")
+        ui.div(
+            {"style": "display: flex; align-items: center; justify-content: space-between;"},
+            # 左侧：侧边栏切换按钮
+            ui.div(
+                ui.input_action_button(
+                    "toggle_sidebar",
+                    "",
+                    class_="sidebar-toggle",
+                    style="background: none; border: none; font-size: 1.5rem; color: #451a03; cursor: pointer; padding: 8px; border-radius: 4px; transition: all 0.3s ease;"
+                ),
+                style="flex: 0 0 auto;"
+            ),
+            # 中间：标题内容 - 保持原样
+            ui.div(
+                [
+                    ui.h2("🧠 WHI 数据问答助手"),
+                    ui.p("询问 WHI 变量、数据集或研究方法相关问题")
+                ],
+                style="flex: 1; text-align: center;"
+            ),
+            # 右侧：占位符保持对称
+            ui.div(
+                style="flex: 0 0 auto; width: 60px;"
+            )
+        )
     ),
     
     # 主要内容区域
     ui.div(
-        {"class": "main-content", "style": "display: flex; gap: 25px; height: calc(100vh - 180px);"},
+        {"class": "main-content", "id": "main-content", "style": "display: flex; height: calc(100vh - 80px); transition: all 0.3s ease;"},
         
-        # 左侧聊天面板
+        # 左侧侧边栏（原聊天面板）
         ui.div(
-            {"class": "chat-panel"},
+            {
+                "class": "sidebar", 
+                "id": "sidebar",
+                "style": "width: 400px; min-width: 400px; display: flex; flex-direction: column; background: #fed7aa; border-right: 1px solid #ea580c; padding: 15px; transition: all 0.3s ease; overflow: hidden;"
+            },
             
             # 系统状态
             ui.output_ui("chat_system_status"),
@@ -52,7 +79,7 @@ app_ui = ui.page_fluid(
                 ui.output_ui("chat_history")
             ),
             
-            # 输入区域
+            # 输入区域 - 调整布局
             ui.div(
                 {"class": "input-area"},
                 ui.div(
@@ -68,28 +95,38 @@ app_ui = ui.page_fluid(
                 ui.div(
                     {"style": "margin-top: 18px; display: flex; justify-content: space-between; align-items: center;"},
                     ui.div(
-                        {"style": "color: #78909c; font-size: 12px; font-weight: 500;"},
-                        "💡 提示：按 Enter 发送，Shift+Enter 换行"
+                        # 空白占位，保持按钮居右
+                        style="flex: 1;"
                     ),
                     ui.div(
-                        ui.input_action_button(
-                            "send_message",
-                            "📤 发送",
-                            class_="btn-primary"
-                        ),
-                        ui.input_action_button(
-                            "clear_chat",
-                            "🗑️ 清空",
-                            class_="btn-secondary"
-                        )
+                        [
+                            ui.input_action_button(
+                                "send_message",
+                                "📤 发送",
+                                class_="btn-primary"
+                            ),
+                            ui.input_action_button(
+                                "clear_chat",
+                                "🗑️ 清空",
+                                class_="btn-secondary"
+                            )
+                        ]
                     )
+                ),
+                # 提示文字移到按钮下方
+                ui.div(
+                    "💡 提示：按 Enter 发送，Shift+Enter 换行",
+                    style="color: #78909c; font-size: 12px; font-weight: 500; text-align: center; margin-top: 10px;"
                 )
             )
         ),
         
-        # 右侧主面板 - 移除快速示例，只保留答案详情
+        # 右侧主面板 - 自动调整宽度
         ui.div(
-            {"style": "flex: 1; display: flex; flex-direction: column; height: 100%; min-height: calc(100vh - 60px); padding-right: 0;"},
+            {
+                "id": "main-panel",
+                "style": "flex: 1; display: flex; flex-direction: column; height: 100%; min-height: calc(100vh - 80px); padding: 0; transition: all 0.3s ease; background: #fffbf5;"
+            },
             
             # 当前答案详情 - 完全填充右侧面板
             ui.card(
@@ -102,9 +139,54 @@ app_ui = ui.page_fluid(
         )
     ),
     
-    # 添加键盘事件监听的JavaScript
+    # 添加侧边栏控制的JavaScript和CSS
+    ui.tags.style("""
+        /* 侧边栏切换按钮样式 - 改进图标 */
+        .sidebar-toggle:before {
+            content: '◧';
+            font-weight: bold;
+        }
+        
+        .sidebar-toggle:hover {
+            background: rgba(69, 26, 3, 0.1) !important;
+            transform: scale(1.05);
+        }
+        
+        /* 侧边栏隐藏状态 */
+        .sidebar.collapsed {
+            width: 0 !important;
+            min-width: 0 !important;
+            padding: 0 !important;
+            border-right: none !important;
+            overflow: hidden !important;
+        }
+        
+        /* 主面板展开状态 */
+        .main-panel.expanded {
+            width: 100% !important;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                height: 100%;
+                z-index: 1000;
+                box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            }
+            
+            .sidebar.collapsed {
+                left: -400px;
+            }
+        }
+    """),
+    
+    # 添加键盘事件监听和侧边栏控制的JavaScript
     ui.tags.script("""
         document.addEventListener('DOMContentLoaded', function() {
+            // 键盘事件监听
             const chatInput = document.getElementById('chat_input');
             if (chatInput) {
                 chatInput.addEventListener('keydown', function(event) {
@@ -117,11 +199,45 @@ app_ui = ui.page_fluid(
                     }
                 });
             }
+            
+            // 侧边栏切换功能
+            let sidebarCollapsed = false;
+            const toggleButton = document.getElementById('toggle_sidebar');
+            const sidebar = document.getElementById('sidebar');
+            const mainPanel = document.getElementById('main-panel');
+            
+            if (toggleButton && sidebar && mainPanel) {
+                toggleButton.addEventListener('click', function() {
+                    sidebarCollapsed = !sidebarCollapsed;
+                    
+                    if (sidebarCollapsed) {
+                        sidebar.classList.add('collapsed');
+                        mainPanel.classList.add('expanded');
+                        toggleButton.style.transform = 'rotate(180deg)';
+                    } else {
+                        sidebar.classList.remove('collapsed');
+                        mainPanel.classList.remove('expanded');
+                        toggleButton.style.transform = 'rotate(0deg)';
+                    }
+                });
+            }
+            
+            // 添加键盘快捷键支持 (Ctrl+B 切换侧边栏)
+            document.addEventListener('keydown', function(event) {
+                if (event.ctrlKey && event.key === 'b') {
+                    event.preventDefault();
+                    if (toggleButton) {
+                        toggleButton.click();
+                    }
+                }
+            });
         });
     """),
     
     fillable=True
 )
+
+
 
 # 服务器逻辑保持不变...
 def server(input: Inputs, output: Outputs, session: Session):
