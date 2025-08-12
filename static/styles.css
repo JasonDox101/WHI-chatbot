@@ -603,3 +603,532 @@ html, body {
     padding-right: 0 !important;
     border-right: none !important;
 }
+
+/* 修复markdown内容间隔问题 */
+.markdown-content {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.5 !important; /* 减少行高 */
+    max-width: 100% !important;
+}
+
+.markdown-content p {
+    margin-bottom: 0.8em !important; /* 减少段落间距 */
+    line-height: 1.5 !important;
+}
+
+.markdown-content ul, .markdown-content ol {
+    margin: 0.5em 0 !important; /* 减少列表间距 */
+    padding-left: 1.5em !important;
+}
+
+.markdown-content li {
+    margin-bottom: 0.3em !important; /* 减少列表项间距 */
+    line-height: 1.4 !important;
+}
+
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+    margin-top: 1em !important;
+    margin-bottom: 0.5em !important; /* 减少标题间距 */
+    line-height: 1.3 !important;
+}
+
+.markdown-content code {
+    background: #f1f3f4 !important;
+    padding: 1px 3px !important; /* 减少代码内边距 */
+    border-radius: 3px !important;
+    font-size: 0.9em !important;
+}
+
+.markdown-content pre {
+    background: #f8f9fa !important;
+    padding: 0.8em !important; /* 减少代码块内边距 */
+    border-radius: 6px !important;
+    overflow-x: auto !important;
+    margin: 0.8em 0 !important; /* 减少代码块间距 */
+    line-height: 1.4 !important;
+}
+
+.markdown-content blockquote {
+    margin: 0.8em 0 !important;
+    padding: 0.5em 1em !important;
+    border-left: 3px solid #ddd !important;
+    background: #f9f9f9 !important;
+}
+
+/* 优化答案容器 */
+.answer-container {
+    min-height: 200px !important;
+    max-height: calc(100vh - 200px) !important;
+    overflow-y: auto !important;
+    padding: 15px !important; /* 减少容器内边距 */
+}
+
+.answer-container > div:first-child {
+    margin-bottom: 10px !important; /* 减少标题下方间距 */
+}
+
+/* 修复右侧面板高度问题 */
+.right-panel .card:first-child {
+    flex: 1 !important;
+    height: auto !important;
+    min-height: calc(100vh - 260px) !important;
+    max-height: calc(100vh - 60px) !important;
+    overflow: visible !important;
+}
+
+/* 英文优化的markdown内容样式 */
+.markdown-content.english-optimized {
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+    color: #2c3e50 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    font-weight: 400 !important;
+}
+
+.markdown-content.english-optimized p {
+    margin-bottom: 1em !important;
+    line-height: 1.6 !important;
+}
+
+.markdown-content.english-optimized h1 {
+    font-size: 1.4rem !important;
+    font-weight: 600 !important;
+    color: #1a202c !important;
+    margin-top: 1.5em !important;
+    margin-bottom: 0.75em !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    padding-bottom: 0.5em !important;
+}
+
+.markdown-content.english-optimized h2 {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    color: #2d3748 !important;
+    margin-top: 1.25em !important;
+    margin-bottom: 0.6em !important;
+}
+
+.markdown-content.english-optimized h3 {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    color: #4a5568 !important;
+    margin-top: 1.1em !important;
+    margin-bottom: 0.5em !important;
+}
+
+.markdown-content.english-optimized h4 {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: #4a5568 !important;
+    margin-top: 1em !important;
+    margin-bottom: 0.4em !important;
+}
+
+.markdown-content.english-optimized ul, .markdown-content.english-optimized ol {
+    margin: 0.8em 0 !important;
+    padding-left: 1.5em !important;
+}
+
+.markdown-content.english-optimized li {
+    margin-bottom: 0.4em !important;
+    line-height: 1.5 !important;
+}
+
+.markdown-content.english-optimized strong {
+    font-weight: 600 !important;
+    color: #1a202c !important;
+}
+
+.markdown-content.english-optimized em {
+    font-style: italic !important;
+    color: #4a5568 !important;
+}
+
+.markdown-content.english-optimized code {
+    background: #f7fafc !important;
+    color: #d53f8c !important;
+    padding: 2px 4px !important;
+    border-radius: 3px !important;
+    font-size: 0.9em !important;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.markdown-content.english-optimized pre {
+    background: #f7fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 1em !important;
+    border-radius: 6px !important;
+    overflow-x: auto !important;
+    margin: 1em 0 !important;
+    line-height: 1.5 !important;
+}
+
+.markdown-content.english-optimized pre code {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    color: #2d3748 !important;
+}
+
+.markdown-content.english-optimized blockquote {
+    margin: 1em 0 !important;
+    padding: 0.8em 1.2em !important;
+    border-left: 4px solid #4299e1 !important;
+    background: #ebf8ff !important;
+    border-radius: 0 4px 4px 0 !important;
+    font-style: italic !important;
+}
+
+.markdown-content.english-optimized table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 1em 0 !important;
+    background: #ffffff !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    font-size: 0.9rem !important;
+}
+
+.markdown-content.english-optimized th {
+    background: #f7fafc !important;
+    padding: 10px 12px !important;
+    text-align: left !important;
+    font-weight: 600 !important;
+    color: #2d3748 !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    font-size: 0.85rem !important;
+}
+
+.markdown-content.english-optimized td {
+    padding: 8px 12px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    vertical-align: top !important;
+    font-size: 0.9rem !important;
+}
+
+.markdown-content.english-optimized tr:hover {
+    background: #f7fafc !important;
+}
+
+/* 数字和统计数据的特殊样式 */
+.markdown-content.english-optimized .number {
+    font-weight: 600 !important;
+    color: #3182ce !important;
+}
+
+/* 变量名和术语的样式 */
+.markdown-content.english-optimized .variable {
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace !important;
+    background: #edf2f7 !important;
+    padding: 1px 3px !important;
+    border-radius: 2px !important;
+    font-size: 0.9em !important;
+}
+
+/* 确保markdown内容稳定显示 */
+.markdown-content {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    line-height: 1.6 !important;
+    color: #2c3e50 !important;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+    margin-top: 1.5em !important;
+    margin-bottom: 0.5em !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+}
+
+.markdown-content p {
+    margin-bottom: 1em !important;
+    line-height: 1.6 !important;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-bottom: 1em !important;
+    padding-left: 1.5em !important;
+}
+
+.markdown-content li {
+    margin-bottom: 0.3em !important;
+    line-height: 1.5 !important;
+}
+
+.markdown-content code {
+    background: #f8f9fa !important;
+    padding: 0.2em 0.4em !important;
+    border-radius: 3px !important;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace !important;
+    font-size: 0.9em !important;
+    color: #e83e8c !important;
+}
+
+.markdown-content pre {
+    background: #f8f9fa !important;
+    padding: 1em !important;
+    border-radius: 6px !important;
+    overflow-x: auto !important;
+    margin-bottom: 1em !important;
+}
+
+.markdown-content table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 1em !important;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid #dee2e6 !important;
+    padding: 0.5em !important;
+    text-align: left !important;
+}
+
+.markdown-content th {
+    background: #f8f9fa !important;
+    font-weight: 600 !important;
+}
+
+.markdown-content.english-optimized .number {
+    font-weight: 600 !important;
+    color: #3182ce !important;
+}
+
+/* 变量名和术语的样式 */
+.markdown-content.english-optimized .variable {
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace !important;
+    background: #edf2f7 !important;
+    padding: 1px 3px !important;
+    border-radius: 2px !important;
+    font-size: 0.9em !important;
+}
+
+/* 添加到现有CSS文件末尾 */
+/* 专业文档格式化样式 */
+.document-style {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif !important;
+    line-height: 1.7 !important;
+    color: #2c3e50 !important;
+    max-width: none !important;
+    padding: 24px !important;
+    background: #ffffff !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+}
+
+/* 标题样式 - 专业文档级别 */
+.document-style h1 {
+    font-size: 1.75rem !important;
+    font-weight: 700 !important;
+    color: #1a202c !important;
+    margin: 0 0 1.5rem 0 !important;
+    padding-bottom: 0.75rem !important;
+    border-bottom: 3px solid #3182ce !important;
+    line-height: 1.3 !important;
+}
+
+.document-style h2 {
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    color: #2d3748 !important;
+    margin: 2rem 0 1rem 0 !important;
+    padding-bottom: 0.5rem !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    line-height: 1.3 !important;
+}
+
+.document-style h3 {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    color: #4a5568 !important;
+    margin: 1.75rem 0 0.75rem 0 !important;
+    line-height: 1.4 !important;
+}
+
+.document-style h4 {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    color: #4a5568 !important;
+    margin: 1.5rem 0 0.5rem 0 !important;
+    line-height: 1.4 !important;
+}
+
+/* 段落样式 */
+.document-style p {
+    margin: 0 0 1.25rem 0 !important;
+    line-height: 1.7 !important;
+    color: #2d3748 !important;
+    text-align: justify !important;
+}
+
+/* 列表样式 - 专业格式 */
+.document-style ul {
+    margin: 1rem 0 1.5rem 0 !important;
+    padding-left: 0 !important;
+    list-style: none !important;
+}
+
+.document-style ul li {
+    position: relative !important;
+    margin: 0.75rem 0 !important;
+    padding-left: 1.75rem !important;
+    line-height: 1.6 !important;
+    color: #2d3748 !important;
+}
+
+.document-style ul li::before {
+    content: '•' !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    color: #3182ce !important;
+    font-weight: bold !important;
+    font-size: 1.2em !important;
+}
+
+.document-style ol {
+    margin: 1rem 0 1.5rem 0 !important;
+    padding-left: 1.75rem !important;
+    counter-reset: item !important;
+}
+
+.document-style ol li {
+    margin: 0.75rem 0 !important;
+    line-height: 1.6 !important;
+    color: #2d3748 !important;
+    counter-increment: item !important;
+    position: relative !important;
+}
+
+/* 强调文本样式 */
+.document-style strong {
+    font-weight: 600 !important;
+    color: #1a202c !important;
+    background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%) !important;
+    background-size: 100% 0.2em !important;
+    background-repeat: no-repeat !important;
+    background-position: 0 88% !important;
+    padding: 0.1em 0.2em !important;
+    border-radius: 2px !important;
+}
+
+/* 引用块样式 - 专业备注格式 */
+.document-style blockquote {
+    margin: 1.5rem 0 !important;
+    padding: 1.25rem 1.5rem !important;
+    background: #f8fafc !important;
+    border-left: 4px solid #e2e8f0 !important;
+    border-radius: 4px !important;
+}
+
+.document-style blockquote::before {
+    content: '' !important;
+}
+
+.document-style blockquote p {
+    margin: 0 !important;
+    font-style: normal !important;
+    color: #0c4a6e !important;
+    font-weight: 500 !important;
+    padding-left: 1rem !important;
+}
+
+/* 代码样式 */
+.document-style code {
+    background: #f1f5f9 !important;
+    color: #be185d !important;
+    padding: 0.2em 0.4em !important;
+    border-radius: 4px !important;
+    font-size: 0.9em !important;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace !important;
+    border: 1px solid #e2e8f0 !important;
+    font-weight: 500 !important;
+}
+
+/* 数值高亮样式 */
+.document-style .number-highlight {
+    background: linear-gradient(120deg, #fef3c7 0%, #fde68a 100%) !important;
+    color: #92400e !important;
+    padding: 0.1em 0.3em !important;
+    border-radius: 4px !important;
+    font-weight: 600 !important;
+    border: 1px solid #f59e0b !important;
+}
+
+/* 分节样式 */
+.document-style hr {
+    margin: 2rem 0 !important;
+    border: none !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, #e2e8f0 0%, #cbd5e0 50%, #e2e8f0 100%) !important;
+    border-radius: 1px !important;
+}
+
+/* 数据来源样式 */
+.document-style .data-sources {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 1.25rem !important;
+    margin: 1.5rem 0 !important;
+}
+
+.document-style .data-sources h4 {
+    margin-top: 0 !important;
+    color: #4a5568 !important;
+    font-size: 1rem !important;
+}
+
+.document-style .data-sources ul {
+    margin-bottom: 0 !important;
+}
+
+.document-style .data-sources li {
+    font-size: 0.9rem !important;
+    color: #4a5568 !important;
+}
+
+/* 强制右侧答案详情统一格式 */
+.answer-container .markdown-content {
+    /* 强制所有标题使用统一样式 */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+.answer-container .markdown-content h1,
+.answer-container .markdown-content h2,
+.answer-container .markdown-content h3 {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    color: #2d3748 !important;
+    margin: 1.5rem 0 0.75rem 0 !important;
+    padding-bottom: 0.5rem !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+}
+
+.answer-container .markdown-content p {
+    line-height: 1.7 !important;
+    margin-bottom: 1rem !important;
+    color: #2d3748 !important;
+}
+
+.answer-container .markdown-content ul li {
+    margin: 0.5rem 0 !important;
+    line-height: 1.6 !important;
+}
+
+.answer-container .markdown-content strong {
+    background: linear-gradient(120deg, #fef3c7 0%, #fde68a 100%) !important;
+    color: #92400e !important;
+    padding: 0.1em 0.3em !important;
+    border-radius: 3px !important;
+    font-weight: 600 !important;
+}

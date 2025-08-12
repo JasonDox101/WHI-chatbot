@@ -6,6 +6,11 @@ class WHIRAGState(TypedDict):
     # 用户输入
     question: str
     
+    # 新增：对话历史上下文
+    conversation_history: Optional[List[Dict[str, Any]]]  # 历史对话记录
+    context_summary: Optional[str]  # 上下文总结
+    related_previous_qa: Optional[List[Dict[str, str]]]  # 相关的历史问答
+    
     # 问题分类
     question_type: Optional[str]  # "variable", "dataset", "general"
     

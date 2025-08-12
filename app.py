@@ -170,23 +170,24 @@ def server(input: Inputs, output: Outputs, session: Session):
                     {"style": "display: flex; flex-direction: column; gap: 10px; padding: 0 20px 20px 20px;"},
                     ui.input_action_button(
                         "example1",
-                        "🩸 血红蛋白变量是什么？",
+                        "🩸 WHI研究中血红蛋白(HGB)变量的测量单位和正常范围是什么？",
                         style="width: 100%; padding: 12px 16px; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); color: #1565c0; border: 1px solid #90caf9; border-radius: 8px; font-size: 0.9rem; text-align: left; transition: all 0.2s ease;"
                     ),
                     ui.input_action_button(
                         "example2",
-                        "📊 显示 MESA 研究数据集",
+                        "📊 WHI研究中Form 80物理测量包含哪些具体指标？",
                         style="width: 100%; padding: 12px 16px; background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%); color: #2e7d32; border: 1px solid #81c784; border-radius: 8px; font-size: 0.9rem; text-align: left; transition: all 0.2s ease;"
                     ),
                     ui.input_action_button(
                         "example3",
-                        "🎯 WHI 的主要研究目标是什么？",
+                        "🎯 WHI观察性研究(OS)和临床试验(CT)的主要区别是什么？",
                         style="width: 100%; padding: 12px 16px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); color: #ef6c00; border: 1px solid #ffcc02; border-radius: 8px; font-size: 0.9rem; text-align: left; transition: all 0.2s ease;"
                     )
                 )
             )
         
         chat_elements = []
+        # 转换聊天消息为对话历史格式
         for msg in messages:
             if msg['type'] == 'user':
                 chat_elements.append(
@@ -227,65 +228,146 @@ def server(input: Inputs, output: Outputs, session: Session):
                 style="color: #6c757d; padding: 15px; text-align: center; font-style: italic;"
             )
     
+    @output
+    @render.ui
+    def context_status():
+        """显示对话上下文状态"""
+        messages = chat_messages.get()
+        context_count = len([msg for msg in messages if msg['type'] == 'user'])
+        
+        if context_count > 0:
+            return ui.div(
+                f"💭 对话上下文: {context_count} 轮对话",
+                style="padding: 8px 12px; background: #e3f2fd; color: #1565c0; border-radius: 6px; font-size: 0.8rem; margin-bottom: 10px; text-align: center;"
+            )
+        return ui.div()
+    
+    # 在文件顶部添加HTML转义处理
+    import html
+    
+    # 修改process_question函数中的markdown转换部分
+    # 在process_question函数前添加格式标准化函数
+    def standardize_detailed_answer_format(raw_answer: str) -> str:
+        """标准化右侧详细答案的显示格式"""
+        import re
+        
+        # 确保答案以标准结构开始
+        if not raw_answer.strip().startswith('#'):
+            raw_answer = f"## 详细分析\n\n{raw_answer}"
+        
+        # 标准化标题格式
+        raw_answer = re.sub(r'^#{1,6}\s*(.+)$', lambda m: f"## {m.group(1).strip()}", raw_answer, flags=re.MULTILINE)
+        
+        # 标准化列表格式
+        raw_answer = re.sub(r'^[•·*-]\s*', '- ', raw_answer, flags=re.MULTILINE)
+        
+        # 确保段落间距
+        raw_answer = re.sub(r'\n{3,}', '\n\n', raw_answer)
+        
+        # 标准化数值显示
+        raw_answer = re.sub(r'(\d+(?:\.\d+)?\s*(?:g/dL|mg/dL|mmHg|%|年|岁))', r'**\1**', raw_answer)
+        
+        return raw_answer.strip()
+    
+    # 修改process_question函数中的详细答案处理部分
     async def process_question(question):
-        """处理用户问题"""
         try:
             if rag_system and system_ready:
-                # 使用RAG系统处理
-                result = rag_system.process_question(question)
+                # 获取对话历史
+                messages = chat_messages.get()
+                conversation_history = []
+                
+                # 改进的对话历史转换逻辑
+                for i in range(0, len(messages), 2):  # 每两条消息为一对
+                    if i < len(messages) and messages[i]['type'] == 'user':
+                        user_question = messages[i]['content']
+                        assistant_answer = ""
+                        
+                        # 查找对应的助手回复
+                        if i + 1 < len(messages) and messages[i + 1]['type'] == 'assistant':
+                            assistant_answer = messages[i + 1]['content']
+                        
+                        # 只添加有完整问答对的历史
+                        if assistant_answer:
+                            conversation_history.append({
+                                "question": user_question,
+                                "answer": assistant_answer,
+                                "timestamp": messages[i]['timestamp'].isoformat() if hasattr(messages[i]['timestamp'], 'isoformat') else str(messages[i]['timestamp'])
+                            })
+                    
+                # 限制对话历史长度，避免累积过多内容
+                if len(conversation_history) > 3:  # 只保留最近3轮完整对话
+                    conversation_history = conversation_history[-3:]
+                
+                
+                # 使用RAG系统处理，传入对话历史
+                result = rag_system.process_question(question, conversation_history)
                 
                 # 获取详细答案和总结答案
                 detailed_answer = result.get('answer', '未生成答案')
+                
+                # 🔧 添加格式标准化
+                detailed_answer = standardize_detailed_answer_format(detailed_answer)
+                
                 summary_answer = result.get('summary_answer', '未生成总结')
                 confidence = result.get('confidence_score', 0)
                 sources = result.get('sources', [])
                 
-                # 将详细答案转换为markdown格式并渲染为HTML
-                markdown_answer = markdown.markdown(detailed_answer, extensions=['extra', 'codehilite'])
+                # 将详细答案转换为markdown格式
+                markdown_answer = markdown.markdown(detailed_answer, extensions=['extra', 'codehilite', 'tables', 'toc'])
                 
-                # 优化格式化详细答案（显示在右侧）- 使用markdown格式
+                # 优化格式化详细答案（显示在右侧）- 确保HTML正确渲染
+                # 在process_question函数中，修改formatted_detailed_answer部分
                 formatted_detailed_answer = f"""
-                <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #007bff;">
-                    <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                        <span style="font-size: 1.2rem; margin-right: 8px;">🎯</span>
-                        <strong style="font-size: 1.1rem; color: #2c3e50;">详细答案</strong>
+                <div class="answer-container" style="
+                    background: #ffffff; 
+                    border-radius: 8px; 
+                    padding: 0; 
+                    margin-bottom: 15px; 
+                    border-left: 4px solid #007bff; 
+                    overflow-y: auto; 
+                    max-height: calc(100vh - 200px); 
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                ">
+                    <div style="display: flex; align-items: center; padding: 20px 24px 15px 24px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                        <span style="font-size: 1.1rem; margin-right: 8px;">📋</span>
+                        <strong style="font-size: 1.05rem; color: #2c3e50;">详细分析报告</strong>
                     </div>
-                    <div style="line-height: 1.8; color: #34495e; font-size: 0.95rem;">
+                    <div class="markdown-content document-style english-optimized">
                         {markdown_answer}
                     </div>
                 </div>
-                
-                <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
-                    <div style="background: white; border-radius: 8px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); flex: 1; min-width: 150px;">
-                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                            <span style="margin-right: 6px;">📊</span>
-                            <strong style="color: #2c3e50; font-size: 0.9rem;">置信度评分</strong>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; padding: 0 4px;">
+                    <div style="background: white; border-radius: 6px; padding: 8px 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); flex: 1; min-width: 120px;">
+                        <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                            <span style="margin-right: 4px; font-size: 0.9rem;">📊</span>
+                            <strong style="color: #2c3e50; font-size: 0.85rem;">置信度</strong>
                         </div>
                         <div style="display: flex; align-items: center;">
-                            <span style="background: {'#28a745' if confidence > 0.7 else '#ffc107' if confidence > 0.4 else '#dc3545'}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;">
+                            <span style="background: {'#28a745' if confidence > 0.7 else '#ffc107' if confidence > 0.4 else '#dc3545'}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">
                                 {confidence:.2f}
                             </span>
-                            <span style="margin-left: 8px; color: #6c757d; font-size: 0.8rem;">
+                            <span style="margin-left: 6px; color: #6c757d; font-size: 0.75rem;">
                                 ({'高' if confidence > 0.7 else '中' if confidence > 0.4 else '低'})
                             </span>
                         </div>
                     </div>
                     
                     {f'''
-                    <div style="background: white; border-radius: 8px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); flex: 1; min-width: 150px;">
-                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                            <span style="margin-right: 6px;">📚</span>
-                            <strong style="color: #2c3e50; font-size: 0.9rem;">参考来源</strong>
+                    <div style="background: white; border-radius: 6px; padding: 8px 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); flex: 1; min-width: 120px;">
+                        <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                            <span style="margin-right: 4px; font-size: 0.9rem;">📚</span>
+                            <strong style="color: #2c3e50; font-size: 0.85rem;">参考来源</strong>
                         </div>
-                        <div style="color: #495057; font-size: 0.9rem;">
-                            <span style="background: #e9ecef; padding: 2px 8px; border-radius: 12px; font-weight: 500;">
+                        <div style="color: #495057; font-size: 0.8rem;">
+                            <span style="background: #e9ecef; padding: 1px 6px; border-radius: 8px; font-weight: 500;">
                                 {len(sources)} 个文档
                             </span>
                         </div>
                     </div>
                     ''' if sources else ''}
                 </div>
-                
                 """
                 
                 current_answer.set(formatted_detailed_answer)
@@ -307,16 +389,25 @@ def server(input: Inputs, output: Outputs, session: Session):
                 
                 # 为fallback模式也提供更好的格式化
                 formatted_fallback = f"""
-                <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; border-left: 4px solid #6c757d;">
-                    <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                <div class="answer-container" style="
+                    background: #ffffff; 
+                    border-radius: 8px; 
+                    padding: 0; 
+                    margin-bottom: 15px; 
+                    border-left: 4px solid #6c757d; 
+                    overflow-y: auto; 
+                    max-height: calc(100vh - 200px); 
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                ">
+                    <div style="display: flex; align-items: center; padding: 20px 24px 15px 24px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
                         <span style="font-size: 1.2rem; margin-right: 8px;">💭</span>
                         <strong style="font-size: 1.1rem; color: #2c3e50;">基础回答</strong>
                     </div>
-                    <div style="line-height: 1.8; color: #34495e; font-size: 0.95rem;">
+                    <div class="markdown-content document-style english-optimized">
                         {markdown_answer}
                     </div>
                 </div>
-                
+
                 <div style="background: #fff3cd; color: #856404; padding: 12px 16px; border-radius: 8px; text-align: center; font-size: 0.85rem; margin-top: 15px;">
                     ⚠️ 当前为演示模式，建议启用 RAG 系统获得更准确的答案
                 </div>
@@ -391,17 +482,17 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.Effect
     @reactive.event(input.example1)
     def handle_example1():
-        ui.update_text_area("chat_input", value="血红蛋白变量是什么？")
+        ui.update_text_area("chat_input", value="WHI研究中血红蛋白(HGB)变量的测量单位和正常范围是什么？")
     
     @reactive.Effect
     @reactive.event(input.example2)
     def handle_example2():
-        ui.update_text_area("chat_input", value="显示 MESA 研究数据集")
+        ui.update_text_area("chat_input", value="WHI研究中Form 80物理测量包含哪些具体指标？")
     
     @reactive.Effect
     @reactive.event(input.example3)
     def handle_example3():
-        ui.update_text_area("chat_input", value="WHI 的主要研究目标是什么？")
+        ui.update_text_area("chat_input", value="WHI观察性研究(OS)和临床试验(CT)的主要区别是什么？")
 
 
 # 创建应用
