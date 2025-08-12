@@ -1,0 +1,605 @@
+/* WHI RAG 聊天应用样式 - 浅色暖色调主题 */
+
+/* 配色方案定义 - 浅色暖色调 */
+:root {
+    /* 顶部区域暖色调主色 - 浅桃色系 */
+    --header-warm: #fdf2f8;
+    --header-warm-dark: #fce7f3;
+    
+    /* 内容区域暖色调主色 - 浅米色系 */
+    --primary-warm: #fef7ed;
+    --primary-warm-dark: #fed7aa;
+    --primary-warm-light: #fffbf5;
+    --primary-warm-lighter: #fffcf9;
+    --primary-warm-lightest: #ffffff;
+    
+    /* 浅橙色辅色调 - 成功状态 */
+    --success-warm: #fef3e2;
+    --success-warm-dark: #ea580c;
+    --success-warm-light: #fed7aa;
+    --success-warm-lighter: #ffedd5;
+    --success-warm-lightest: #fff7ed;
+    
+    /* 浅黄色辅色调 - 警告状态 */
+    --warning-warm: #fefce8;
+    --warning-warm-dark: #ca8a04;
+    --warning-warm-light: #fde047;
+    --warning-warm-lighter: #fef3c7;
+    --warning-warm-lightest: #fffbeb;
+    
+    /* 浅粉色辅色调 - 特殊强调 */
+    --accent-warm: #fdf2f8;
+    --accent-warm-dark: #be185d;
+    --accent-warm-light: #f9a8d4;
+    --accent-warm-lighter: #fce7f3;
+    --accent-warm-lightest: #fdf2f8;
+    
+    /* 浅红色辅色调 - 错误状态 */
+    --error-warm: #fef2f2;
+    --error-warm-dark: #dc2626;
+    --error-warm-light: #fca5a5;
+    --error-warm-lighter: #fecaca;
+    --error-warm-lightest: #fef2f2;
+    
+    /* 暖中性色调 */
+    --neutral-warm: #faf9f7;
+    --neutral-warm-dark: #f5f4f1;
+    --neutral-warm-light: #fefefe;
+    --neutral-warm-lighter: #ffffff;
+    --neutral-warm-lightest: #ffffff;
+    
+    /* 文字颜色 - 暖色调 */
+    --text-primary: #451a03;
+    --text-secondary: #78716c;
+    --text-muted: #a8a29e;
+    --text-light: #d6d3d1;
+    
+    /* 背景色 - 暖色调 */
+    --bg-white: #ffffff;
+    --bg-light: #fefdfb;
+    --bg-lighter: #faf8f5;
+    --bg-lightest: #ffffff;
+}
+
+/* 全局样式 - 完全紧贴边界，暖色背景 */
+body {
+    background: var(--bg-lighter) !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    min-height: 100vh;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden;
+}
+
+/* 页面容器样式 - 完全紧贴边界 */
+.container-fluid {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100vw !important;
+    min-height: 100vh !important;
+}
+
+/* 主应用容器 - 完全填充 */
+.shiny-output-container {
+    width: 100vw !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 卡片样式 - 暖色调 */
+.card {
+    background: var(--bg-white) !important;
+    border: 1px solid var(--neutral-warm-dark) !important;
+    box-shadow: 0 2px 8px rgba(120, 113, 108, 0.1) !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    margin: 0 !important;
+}
+
+.card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(120, 113, 108, 0.15) !important;
+}
+
+.card-header {
+    background: var(--primary-warm) !important;
+    color: var(--text-primary) !important;
+    border-bottom: 1px solid var(--neutral-warm-dark) !important;
+    font-weight: 600 !important;
+    border-radius: 8px 8px 0 0 !important;
+    padding: 12px 16px !important;
+}
+
+/* 顶部标题区域 - 使用桃色系，与下面内容区分 */
+.top-header {
+    padding: 12px;
+    background: var(--header-warm);
+    color: var(--text-primary);
+    border-radius: 0;
+    margin: 0;
+    box-shadow: 0 2px 4px rgba(190, 24, 93, 0.1);
+    position: relative;
+    width: 100vw;
+    border-bottom: 2px solid var(--header-warm-dark);
+}
+
+.top-header h2 {
+    margin: 0;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+
+.top-header p {
+    margin: 5px 0 0 0;
+    text-align: center;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    font-weight: 400;
+}
+
+/* 主要内容区域 - 使用米色系，与顶部区分 */
+.main-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 0 !important;
+    width: 100vw !important;
+    min-height: calc(100vh - 60px) !important;
+    display: flex !important;
+    background: var(--bg-lighter) !important;
+}
+
+/* 左侧聊天面板 - 使用米色系背景 */
+.chat-panel {
+    width: 600px;
+    display: flex;
+    flex-direction: column;
+    background: var(--primary-warm-light);
+    border-radius: 0;
+    box-shadow: none;
+    padding: 15px;
+    border-right: 1px solid var(--primary-warm-dark);
+    margin: 0;
+    min-height: calc(100vh - 60px);
+}
+
+/* 右侧面板 - 完全填充 */
+.right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: calc(100vh - 60px);
+    max-height: calc(100vh - 60px);
+    padding: 0 !important;
+    margin: 0 !important;
+    background: var(--primary-warm-lighter);
+}
+
+/* 答案详情卡片 - 完全填充右侧面板 */
+.right-panel .card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    background: var(--primary-warm-lighter) !important;
+    height: 100%;
+    min-height: calc(100vh - 60px);
+}
+
+/* 答案详情内容区域 - 完全填充 */
+.right-panel .card > div:last-child {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px !important;
+    height: 100%;
+}
+
+/* 聊天框中的示例按钮悬停效果 */
+.shiny-input-container button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 快速示例卡片 - 固定高度，无空白 */
+.right-panel .card:last-child {
+    flex: 0 0 200px;
+    height: 200px;
+    min-height: 200px;
+    max-height: 200px;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* 确保卡片内容完全填充 */
+.right-panel .card:first-child > div:last-child {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+/* 右侧卡片容器 - 固定尺寸 */
+.right-panel .card {
+    margin: 0 !important;
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    background: var(--primary-warm-lighter) !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* 答案详情卡片 - 固定高度，不随内容变化 */
+.right-panel .card:first-child {
+    flex: 0 0 calc(100vh - 60px - 200px); /* 固定高度 */
+    height: calc(100vh - 60px - 200px);
+    min-height: calc(100vh - 60px - 200px);
+    max-height: calc(100vh - 60px - 200px);
+    overflow: hidden;
+}
+
+/* 快速示例卡片 - 固定高度 */
+.right-panel .card:last-child {
+    flex: 0 0 200px;
+    height: 200px;
+    min-height: 200px;
+    max-height: 200px;
+    margin-top: 0;
+    overflow: hidden;
+}
+
+/* 答案详情内容区域 - 固定尺寸，内容滚动 */
+.right-panel .card:first-child .card-body,
+.right-panel .card:first-child > div:last-child {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 15px !important;
+    overflow-y: auto;
+    height: 100%;
+    max-height: 100%;
+}
+
+/* 快速示例内容区域 - 固定布局 */
+.right-panel .card:last-child > div:last-child {
+    padding: 15px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    justify-content: flex-start;
+}
+
+/* 示例按钮 - 固定尺寸 */
+.example-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-warm);
+    border: 1px solid var(--primary-warm-dark);
+    border-radius: 6px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(234, 88, 12, 0.1);
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    flex: 0 0 auto;
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.example-btn:hover {
+    background: var(--success-warm) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--success-warm-dark) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(234, 88, 12, 0.15) !important;
+}
+
+/* 确保页面底部无空白 */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* 确保右侧完全贴合 */
+.main-content > div:last-child {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    border-right: none !important;
+}
+
+/* 主要内容区域 - 完全填充 */
+.main-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 0 !important;
+    width: 100vw !important;
+    min-height: calc(100vh - 60px) !important;
+    display: flex !important;
+    background: var(--bg-lighter) !important;
+    height: calc(100vh - 60px) !important;
+}
+
+/* 系统状态样式 - 暖色调 */
+.status-ready {
+    padding: 8px 12px;
+    background: var(--success-warm);
+    color: var(--success-warm-dark);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    font-weight: 500;
+    border: 1px solid var(--success-warm-dark);
+}
+
+.status-demo {
+    padding: 8px 12px;
+    background: var(--warning-warm);
+    color: var(--warning-warm-dark);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    font-weight: 500;
+    border: 1px solid var(--warning-warm-dark);
+}
+
+/* 聊天历史区域 - 使用更深的米色调 */
+.chat-history {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    background: var(--primary-warm);
+    border-radius: 6px;
+    margin-bottom: 15px;
+    min-height: 400px;
+    border: 1px solid var(--primary-warm-dark);
+}
+
+/* 聊天气泡样式 - 暖色调 */
+.chat-bubble-user {
+    display: inline-block;
+    background: var(--header-warm);
+    color: var(--text-primary);
+    padding: 10px 15px;
+    border-radius: 12px 12px 4px 12px;
+    max-width: 80%;
+    word-wrap: break-word;
+    box-shadow: 0 2px 6px rgba(120, 113, 108, 0.1);
+    font-weight: 500;
+    position: relative;
+    border: 1px solid var(--header-warm-dark);
+}
+
+.chat-bubble-assistant {
+    display: inline-block;
+    background: var(--bg-white);
+    color: var(--text-primary);
+    padding: 10px 15px;
+    border-radius: 12px 12px 12px 4px;
+    max-width: 80%;
+    word-wrap: break-word;
+    box-shadow: 0 2px 6px rgba(120, 113, 108, 0.1);
+    border: 1px solid var(--primary-warm-dark);
+    position: relative;
+}
+
+/* 输入区域 - 使用米色调 */
+.input-area {
+    padding: 15px;
+    background: var(--primary-warm);
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(120, 113, 108, 0.1);
+    border: 1px solid var(--primary-warm-dark);
+}
+
+/* 输入框样式 - 暖色调 */
+#chat_input {
+    border: 1px solid var(--primary-warm-dark) !important;
+    border-radius: 6px !important;
+    padding: 12px !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    resize: none !important;
+    transition: all 0.3s ease !important;
+    background: var(--bg-white) !important;
+    box-shadow: inset 0 1px 3px rgba(234, 88, 12, 0.1) !important;
+}
+
+#chat_input:focus {
+    border-color: var(--success-warm-dark) !important;
+    box-shadow: 0 0 0 2px rgba(254, 215, 170, 0.5) !important;
+    outline: none !important;
+    background: var(--bg-white) !important;
+}
+
+#chat_input::placeholder {
+    color: var(--text-light) !important;
+    font-style: italic !important;
+}
+
+/* 按钮样式 - 使用米色调 */
+.btn-primary {
+    background: var(--primary-warm);
+    color: var(--text-primary);
+    border: 1px solid var(--primary-warm-dark);
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(234, 88, 12, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(234, 88, 12, 0.15) !important;
+    background: var(--primary-warm-dark);
+}
+
+.btn-secondary {
+    background: var(--neutral-warm);
+    color: var(--text-primary);
+    border: 1px solid var(--neutral-warm-dark);
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(120, 113, 108, 0.1);
+    margin-left: 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(120, 113, 108, 0.15) !important;
+    background: var(--neutral-warm-dark);
+}
+
+/* 示例按钮样式 - 使用米色调 */
+.example-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-warm);
+    border: 1px solid var(--primary-warm-dark);
+    border-radius: 6px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(234, 88, 12, 0.1);
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.example-btn:hover {
+    background: var(--success-warm) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--success-warm-dark) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(234, 88, 12, 0.15) !important;
+}
+
+/* 特殊状态样式 - 暖色调 */
+.confidence-high {
+    background: var(--success-warm);
+    color: var(--success-warm-dark);
+}
+
+.confidence-medium {
+    background: var(--warning-warm);
+    color: var(--warning-warm-dark);
+}
+
+.confidence-low {
+    background: var(--error-warm);
+    color: var(--error-warm-dark);
+}
+
+/* 错误提示样式 - 暖色调 */
+.error-message {
+    background: var(--error-warm);
+    border: 1px solid var(--error-warm-dark);
+    color: var(--error-warm-dark);
+    padding: 12px;
+    border-radius: 6px;
+}
+
+/* 警告提示样式 - 暖色调 */
+.warning-message {
+    background: var(--warning-warm);
+    color: var(--warning-warm-dark);
+    padding: 10px 12px;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.85rem;
+    margin-top: 12px;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .chat-panel {
+        width: 500px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+        gap: 0;
+        padding: 0 !important;
+        width: 100vw !important;
+    }
+    
+    .chat-panel {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--primary-warm-dark);
+        min-height: auto;
+    }
+    
+    .right-panel {
+        min-height: auto;
+    }
+    
+    .top-header {
+        padding: 10px;
+    }
+    
+    .top-header h2 {
+        font-size: 1.2rem;
+    }
+}
+
+/* 滚动条样式 - 暖色调 */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--primary-warm-light);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-warm-dark);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-warm);
+}
+
+/* 确保页面底部无空白 */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* 确保右侧完全贴合 */
+.main-content > div:last-child {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    border-right: none !important;
+}
