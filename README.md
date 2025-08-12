@@ -190,28 +190,28 @@ WHI（Women's Health Initiative）是一项长期、大规模的全国性健康�
 
 ## 📁 项目结构
 WHI-chatbot/
-├── app.py                 # 主应用入口
-├── requirements.txt       # 依赖包列表
-├── README.md              # 项目文档
+├── app.py # 主应用入口
+├── requirements.txt # 依赖包列表
+├── README.md # 项目文档
 ├── config/
-│   └── settings.py        # 配置管理
+│ └── settings.py # 配置管理
 ├── data/
-│   └── processor.py       # 数据处理脚本
+│ └── processor.py # 数据处理脚本
 ├── graph/
-│   └── state.py          # 状态管理
+│ └── state.py # 状态管理
 ├── llm/
-│   └── qwen_client.py    # LLM客户端
+│ └── qwen_client.py # LLM客户端
 ├── rag/
-│   └── system.py         # RAG核心逻辑
+│ └── system.py # RAG核心逻辑
 ├── static/
-│   └── styles.css        # 前端样式
+│ └── styles.css # 前端样式
 ├── vector_store/
-│   └── manager.py        # 向量数据库管理
-├── whi_dataset_desc_with_url.csv  # WHI数据集描述
-├── whi_mesa_v2.csv       # MESA数据集
-└── whi_vectorstore/      # 向量索引文件
-    ├── index.faiss
-    └── index.pkl
+│ └── manager.py # 向量数据库管理
+├── whi_dataset_desc_with_url.csv # WHI数据集描述
+├── whi_mesa_v2.csv # MESA数据集
+└── whi_vectorstore/ # 向量索引文件
+├── index.faiss
+└── index.pkl
 
 ### 核心模块说明
 
