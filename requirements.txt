@@ -2,5 +2,12 @@ shiny>=0.6.0
 pandas
 numpy
 scikit-learn
-faiss-cpu  
+faiss-cpu
 langchain
+openai
+python-dotenv
+markdown
+langchain-community
+langchain-huggingface
+langgraph
+sentence-transformers
