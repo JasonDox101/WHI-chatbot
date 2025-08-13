@@ -4,14 +4,14 @@ from langchain_core.documents import Document
 from config.settings import WHIConfig
 
 class WHIDataProcessor:
-    """WHI数据处理器"""
+    """WHI Data Processor for handling medical research data"""
     
     def __init__(self):
         self.mesa_data = None
         self.dataset_desc = None
     
     def load_data(self) -> None:
-        """加载数据文件"""
+        """Load data files from configured paths"""
         try:
             self.mesa_data = pd.read_csv(WHIConfig.MESA_DATA_PATH)
             self.dataset_desc = pd.read_csv(WHIConfig.DATASET_DESC_PATH)
@@ -19,10 +19,10 @@ class WHIDataProcessor:
             raise Exception(f"Data loading failed: {str(e)}")
     
     def create_documents(self) -> List[Document]:
-        """创建LangChain文档对象"""
+        """Create LangChain document objects from loaded data"""
         documents = []
         
-        # 处理变量级别数据
+        # Process variable-level data
         for _, row in self.mesa_data.iterrows():
             content = f"""Variable Name: {row['Variable name']}
 Variable Description: {row['Variable description']}
@@ -42,7 +42,7 @@ Database: {row['Database']}"""
             
             documents.append(Document(page_content=content, metadata=metadata))
         
-        # 处理数据集级别数据
+        # Process dataset-level data
         for _, row in self.dataset_desc.iterrows():
             content = f"""Dataset Name: {row['Dataset name']}
 Dataset Description: {row['Dataset description']}

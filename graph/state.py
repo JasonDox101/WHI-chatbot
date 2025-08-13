@@ -2,33 +2,33 @@ from typing import TypedDict, List, Optional, Dict, Any
 from langchain.schema import Document
 
 class WHIRAGState(TypedDict):
-    """WHI RAG系统状态"""
-    # 用户输入
+    """WHI RAG system state management."""
+    # User input
     question: str
     
-    # 新增：对话历史上下文
-    conversation_history: Optional[List[Dict[str, Any]]]  # 历史对话记录
-    context_summary: Optional[str]  # 上下文总结
-    related_previous_qa: Optional[List[Dict[str, str]]]  # 相关的历史问答
+    # Conversation history context
+    conversation_history: Optional[List[Dict[str, Any]]]  # Historical conversation records
+    context_summary: Optional[str]  # Context summary
+    related_previous_qa: Optional[List[Dict[str, str]]]  # Related historical Q&A
     
-    # 问题分类
+    # Question classification
     question_type: Optional[str]  # "variable", "dataset", "general"
     
-    # 检索相关
+    # Retrieval related
     search_query: Optional[str]
     retrieved_documents: Optional[List[Document]]
     
-    # 生成相关
+    # Generation related
     context: Optional[str]
     answer: Optional[str]
-    summary_answer: Optional[str]  # 新增：总结答案
+    summary_answer: Optional[str]  # Summary answer
     
-    # 验证相关
+    # Validation related
     confidence_score: Optional[float]
     sources: Optional[List[Dict[str, Any]]]
     
-    # 处理步骤
+    # Processing steps
     processing_steps: Optional[List[str]]
     
-    # 错误处理
+    # Error handling
     error: Optional[str]

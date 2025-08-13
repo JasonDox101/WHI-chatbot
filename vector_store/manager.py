@@ -5,7 +5,7 @@ from typing import List, Optional
 from config.settings import WHIConfig
 
 class WHIVectorStoreManager:
-    """WHI向量存储管理器"""
+    """WHI vector store manager for document retrieval."""
     
     def __init__(self):
         self.embeddings = HuggingFaceEmbeddings(
@@ -14,7 +14,7 @@ class WHIVectorStoreManager:
         self.vector_store: Optional[FAISS] = None
     
     def create_vector_store(self, documents: List[Document]) -> None:
-        """创建向量存储"""
+        """Create vector store from documents."""
         self.vector_store = FAISS.from_documents(
             documents=documents,
             embedding=self.embeddings
@@ -22,7 +22,7 @@ class WHIVectorStoreManager:
         self.save_vector_store()
     
     def load_vector_store(self) -> bool:
-        """加载已存在的向量存储"""
+        """Load existing vector store."""
         try:
             self.vector_store = FAISS.load_local(
                 WHIConfig.VECTOR_STORE_PATH,
@@ -34,12 +34,12 @@ class WHIVectorStoreManager:
             return False
     
     def save_vector_store(self) -> None:
-        """保存向量存储"""
+        """Save vector store to disk."""
         if self.vector_store:
             self.vector_store.save_local(WHIConfig.VECTOR_STORE_PATH)
     
     def similarity_search(self, query: str, k: int = None) -> List[Document]:
-        """相似性搜索"""
+        """Perform similarity search."""
         if not self.vector_store:
             raise Exception("Vector store not initialized")
         

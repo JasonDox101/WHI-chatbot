@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from config.settings import WHIConfig
 
 class QwenLLMClient:
-    """千问LLM客户端封装"""
+    """Qwen LLM client wrapper for medical data analysis."""
     
     def __init__(self):
         self.client = OpenAI(
@@ -12,7 +12,7 @@ class QwenLLMClient:
         )
     
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> str:
-        """生成回复"""
+        """Generate response from LLM."""
         try:
             completion = self.client.chat.completions.create(
                 model=WHIConfig.MODEL_NAME,
@@ -24,7 +24,7 @@ class QwenLLMClient:
             raise Exception(f"LLM call failed: {str(e)}")
     
     def generate_embedding_query(self, text: str) -> str:
-        """为检索生成优化的查询"""
+        """Generate optimized query for retrieval."""
         messages = [
             {"role": "system", "content": "You are a professional medical research assistant, skilled at converting user questions into precise retrieval queries."},
             {"role": "user", "content": f"Please convert the following question into keyword queries suitable for retrieval in WHI medical data: {text}"}

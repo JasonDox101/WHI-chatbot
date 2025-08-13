@@ -1,67 +1,67 @@
-/* WHI RAG 聊天应用样式 - 浅色暖色调主题 */
+/* WHI RAG Chat Application Styles - Light Warm Color Theme */
 
-/* 配色方案定义 - 浅色暖色调 */
+/* Color Scheme Definition - Light Warm Colors */
 :root {
-    /* 顶部区域暖色调主色 - 浅桃色系 */
+    /* Top area warm primary colors - light peach tones */
     --header-warm: #fdf2f8;
     --header-warm-dark: #fce7f3;
     
-    /* 内容区域暖色调主色 - 浅米色系 */
+    /* Content area warm primary colors - light beige tones */
     --primary-warm: #fef7ed;
     --primary-warm-dark: #fed7aa;
     --primary-warm-light: #fffbf5;
     --primary-warm-lighter: #fffcf9;
     --primary-warm-lightest: #ffffff;
     
-    /* 浅橙色辅色调 - 成功状态 */
+    /* Light orange accent colors - success state */
     --success-warm: #fef3e2;
     --success-warm-dark: #ea580c;
     --success-warm-light: #fed7aa;
     --success-warm-lighter: #ffedd5;
     --success-warm-lightest: #fff7ed;
     
-    /* 浅黄色辅色调 - 警告状态 */
+    /* Light yellow accent colors - warning state */
     --warning-warm: #fefce8;
     --warning-warm-dark: #ca8a04;
     --warning-warm-light: #fde047;
     --warning-warm-lighter: #fef3c7;
     --warning-warm-lightest: #fffbeb;
     
-    /* 浅粉色辅色调 - 特殊强调 */
+    /* Light pink accent colors - special emphasis */
     --accent-warm: #fdf2f8;
     --accent-warm-dark: #be185d;
     --accent-warm-light: #f9a8d4;
     --accent-warm-lighter: #fce7f3;
     --accent-warm-lightest: #fdf2f8;
     
-    /* 浅红色辅色调 - 错误状态 */
+    /* Light red accent colors - error state */
     --error-warm: #fef2f2;
     --error-warm-dark: #dc2626;
     --error-warm-light: #fca5a5;
     --error-warm-lighter: #fecaca;
     --error-warm-lightest: #fef2f2;
     
-    /* 暖中性色调 */
+    /* Warm neutral colors */
     --neutral-warm: #faf9f7;
     --neutral-warm-dark: #f5f4f1;
     --neutral-warm-light: #fefefe;
     --neutral-warm-lighter: #ffffff;
     --neutral-warm-lightest: #ffffff;
     
-    /* 文字颜色 - 暖色调 */
+    /* Text colors - warm tones */
     --text-primary: #451a03;
     --text-secondary: #78716c;
     --text-muted: #a8a29e;
     --text-light: #d6d3d1;
     
-    /* 背景色 - 暖色调 */
+    /* Background colors - warm tones */
     --bg-white: #ffffff;
     --bg-light: #fefdfb;
     --bg-lighter: #faf8f5;
     --bg-lightest: #ffffff;
 }
 
-/* 全局样式 - 完全紧贴边界，暖色背景 */
+/* Global styles - completely edge-to-edge, warm background */
 body {
     background: var(--bg-lighter) !important;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;

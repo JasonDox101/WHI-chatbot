@@ -10,25 +10,25 @@ import re
 from datetime import datetime
 
 class WHIRAGSystem:
-    """WHI RAG系统核心类"""
+    """Core WHI RAG system for medical data analysis and question answering."""
     
     def __init__(self):
         self.llm_client = QwenLLMClient()
         self.vector_manager = WHIVectorStoreManager()
         self.data_processor = WHIDataProcessor()
         self.workflow = None
-        self.conversation_memory = []  # 对话记忆存储
-        self.max_history_length = 10  # 最大保存历史对话数量
+        self.conversation_memory = []  # Conversation memory storage
+        self.max_history_length = 10  # Maximum number of historical conversations to keep
         self._initialize_system()
         self._build_workflow()
     
     def _initialize_system(self) -> None:
-        """初始化系统"""
+        """Initialize the RAG system components."""
         try:
-            # 加载数据
+            # Load data
             self.data_processor.load_data()
             
-            # 尝试加载已存在的向量存储
+            # Try to load existing vector store
             if not self.vector_manager.load_vector_store():
                 print("Creating new vector store...") 
                 documents = self.data_processor.create_documents()
@@ -41,34 +41,34 @@ class WHIRAGSystem:
             raise
     
     def process_question(self, question: str, conversation_history: List[Dict] = None) -> Dict[str, Any]:
-        """处理问题，支持对话上下文"""
+        """Process user question with conversation context support."""
         try:
-            # 初始化状态，包含对话历史
+            # Initialize state with conversation history
             initial_state = {
                 "question": question,
                 "conversation_history": conversation_history or [],
                 "processing_steps": []
             }
             
-            # 运行工作流
+            # Run workflow
             result = self.workflow.invoke(initial_state)
             
-            # 保存到对话记忆
+            # Save to conversation memory
             self._save_to_memory(question, result)
             
             return result
         except Exception as e:
             return {
-                "error": f"问题处理失败: {str(e)}",
-                "answer": "抱歉，处理您的问题时出现了错误。",
-                "summary_answer": "系统暂时无法处理您的问题，请稍后重试。",
+                "error": f"Question processing failed: {str(e)}",
+                "answer": "Sorry, an error occurred while processing your question.",
+                "summary_answer": "The system is temporarily unable to process your question. Please try again later.",
                 "confidence_score": 0.0,
                 "sources": [],
-                "processing_steps": [f"错误: {str(e)}"]
+                "processing_steps": [f"Error: {str(e)}"]
             }
     
     def _save_to_memory(self, question: str, result: Dict[str, Any]):
-        """保存对话到记忆中"""
+        """Save conversation to memory."""
         try:
             qa_pair = {
                 "question": question,
@@ -81,17 +81,17 @@ class WHIRAGSystem:
             
             self.conversation_memory.append(qa_pair)
             
-            # 保持记忆长度限制
+            # Maintain memory length limit
             if len(self.conversation_memory) > self.max_history_length:
                 self.conversation_memory.pop(0)
         except Exception as e:
-            print(f"保存对话记忆失败: {str(e)}")
+            print(f"Failed to save conversation memory: {str(e)}")
     
     def _build_workflow(self) -> None:
-        """构建增强的LangGraph工作流"""
+        """Build enhanced LangGraph workflow."""
         workflow = StateGraph(WHIRAGState)
         
-        # 添加节点
+        # Add nodes
         workflow.add_node("analyze_context", self._analyze_context)
         workflow.add_node("classify_question", self._classify_question)
         workflow.add_node("retrieve_documents", self._retrieve_documents)
@@ -99,7 +99,7 @@ class WHIRAGSystem:
         workflow.add_node("summarize_answer", self._summarize_answer)
         workflow.add_node("validate_answer", self._validate_answer)
         
-        # 设置边 - 新的流程
+        # Set edges - new workflow
         workflow.set_entry_point("analyze_context")
         workflow.add_edge("analyze_context", "classify_question")
         workflow.add_edge("classify_question", "retrieve_documents")
@@ -111,56 +111,54 @@ class WHIRAGSystem:
         self.workflow = workflow.compile()
     
     def _analyze_context(self, state: WHIRAGState) -> Dict[str, Any]:
-        """分析对话上下文的节点"""
+        """Analyze conversation context node."""
         try:
             question = state["question"]
             history = state.get("conversation_history", [])
             processing_steps = state.get("processing_steps", [])
-            processing_steps.append("开始上下文分析")
-            
+            processing_steps.append("Starting context analysis")
             
             if not history:
                 return {
-                    "context_summary": "无历史对话上下文",
+                    "context_summary": "No historical conversation context",
                     "related_previous_qa": [],
                     "is_context_related": False,
                     "processing_steps": processing_steps
                 }
             
-            # 改进的上下文分析提示
+            # Enhanced context analysis prompt
             context_prompt = f"""
-你是WHI医学数据分析专家。请仔细分析当前问题与历史对话的关联性。
+You are a WHI medical data analysis expert. Please carefully analyze the relationship between the current question and historical conversations.
 
-当前问题：{question}
+Current question: {question}
 
-历史对话：
+Historical conversations:
 {self._format_history_for_analysis(history)}
 
-分析要求：
-1. 检查当前问题是否引用了之前提到的概念、数值、变量名等
-2. 判断是否需要结合之前的答案来回答当前问题
-3. 识别相关的历史问答对
-4. 生成简洁的上下文总结
+Analysis requirements:
+1. Check if the current question references concepts, values, variable names mentioned previously
+2. Determine if previous answers are needed to answer the current question
+3. Identify relevant historical Q&A pairs
+4. Generate a concise context summary
 
-请返回JSON格式（确保格式正确）：
+Please return in JSON format (ensure correct format):
 {{
     "is_related": true,
-    "context_summary": "简洁的上下文总结",
+    "context_summary": "Concise context summary",
     "related_qa_indices": [0, 1],
-    "reasoning": "详细的关联性分析原因"
+    "reasoning": "Detailed reasoning for relationship analysis"
 }}
 """
             
             messages = [
-                {"role": "system", "content": "你是专业的医学数据分析助手，擅长分析对话上下文关联性。请严格按照JSON格式返回结果。"},
+                {"role": "system", "content": "You are a professional medical data analysis assistant, skilled at analyzing conversation context relationships. Please return results strictly in JSON format."},
                 {"role": "user", "content": context_prompt}
             ]
             
             try:
                 analysis_result = self.llm_client.generate_response(messages)
-                # print(f"LLM上下文分析结果: {analysis_result}")  # 移除此行
                 
-                # 清理可能的markdown格式
+                # Clean possible markdown format
                 if "```json" in analysis_result:
                     analysis_result = analysis_result.split("```json")[1].split("```")[0].strip()
                 elif "```" in analysis_result:
@@ -168,11 +166,10 @@ class WHIRAGSystem:
                 
                 analysis = json.loads(analysis_result)
             except Exception as e:
-                # print(f"LLM分析失败，使用简单匹配: {e}")  # 移除此行
-                # 如果LLM分析失败，使用改进的关键词匹配
+                # If LLM analysis fails, use enhanced keyword matching
                 analysis = self._enhanced_context_analysis(question, history)
             
-            # 提取相关的历史问答
+            # Extract relevant historical Q&A
             related_qa = []
             if analysis.get("is_related", False):
                 for idx in analysis.get("related_qa_indices", []):
@@ -182,7 +179,7 @@ class WHIRAGSystem:
                             "answer": history[idx]["answer"]
                         })
             
-            processing_steps.append("上下文分析完成")
+            processing_steps.append("Context analysis completed")
             
             return {
                 "context_summary": analysis.get("context_summary", ""),
@@ -193,41 +190,51 @@ class WHIRAGSystem:
             
         except Exception as e:
             return {
-                "context_summary": "上下文分析失败",
+                "context_summary": "Context analysis failed",
                 "related_previous_qa": [],
                 "is_context_related": False,
-                "error": f"上下文分析失败: {str(e)}",
-                "processing_steps": processing_steps + [f"上下文分析失败: {str(e)}"]
+                "error": f"Context analysis failed: {str(e)}",
+                "processing_steps": processing_steps + [f"Context analysis failed: {str(e)}"]
             }
     
-    def _simple_context_analysis(self, question: str, history: List[Dict]) -> Dict[str, Any]:
-        """简单的上下文分析（关键词匹配）"""
+    def _enhanced_context_analysis(self, question: str, history: List[Dict]) -> Dict[str, Any]:
+        """Enhanced context analysis using keyword matching and semantic similarity."""
         question_lower = question.lower()
         related_indices = []
         
+        # Medical term keywords for WHI research
+        medical_keywords = ['hemoglobin', 'hgb', 'blood', 'pressure', 'cholesterol', 'bmi', 'weight', 'height']
+        dataset_keywords = ['mesa', 'whi', 'form', 'dataset', 'study', 'variable']
+        
         for i, item in enumerate(history):
             hist_question = item.get("question", "").lower()
-            # 简单的关键词重叠检测
+            hist_answer = item.get("answer", "").lower()
+            
+            # Keyword overlap detection
             question_words = set(question_lower.split())
             hist_words = set(hist_question.split())
             overlap = len(question_words & hist_words)
             
-            if overlap > 1:  # 如果有超过1个词重叠
+            # Medical term matching
+            medical_overlap = any(term in question_lower and term in hist_question for term in medical_keywords)
+            dataset_overlap = any(term in question_lower and term in hist_question for term in dataset_keywords)
+            
+            if overlap > 1 or medical_overlap or dataset_overlap:
                 related_indices.append(i)
         
         return {
             "is_related": len(related_indices) > 0,
-            "context_summary": f"发现{len(related_indices)}个相关历史对话" if related_indices else "无相关历史对话",
+            "context_summary": f"Found {len(related_indices)} related historical conversations" if related_indices else "No related historical conversations",
             "related_qa_indices": related_indices,
-            "reasoning": "基于关键词匹配的简单分析"
+            "reasoning": "Enhanced analysis based on keyword matching and medical term recognition"
         }
     
     def _classify_question(self, state: WHIRAGState) -> Dict[str, Any]:
-        """问题分类节点"""
+        """Question classification node."""
         try:
             question = state["question"]
             processing_steps = state.get("processing_steps", [])
-            processing_steps.append("开始问题分类")
+            processing_steps.append("Starting question classification")
             
             classification_prompt = f"""
 Please classify the following question about WHI (Women's Health Initiative) data:
@@ -249,11 +256,11 @@ Return only the category name.
             
             question_type = self.llm_client.generate_response(messages).strip().lower()
             
-            # 确保分类结果有效
+            # Ensure classification result is valid
             if question_type not in ["variable", "dataset", "general"]:
                 question_type = "general"
             
-            processing_steps.append(f"问题分类完成: {question_type}")
+            processing_steps.append(f"Question classification completed: {question_type}")
             
             return {
                 "question_type": question_type,
@@ -262,29 +269,29 @@ Return only the category name.
         except Exception as e:
             return {
                 "question_type": "general",
-                "error": f"问题分类失败: {str(e)}",
-                "processing_steps": processing_steps + [f"问题分类失败: {str(e)}"]
+                "error": f"Question classification failed: {str(e)}",
+                "processing_steps": processing_steps + [f"Question classification failed: {str(e)}"]
             }
     
     def _retrieve_documents(self, state: WHIRAGState) -> Dict[str, Any]:
-        """文档检索节点"""
+        """Document retrieval node."""
         try:
             question = state["question"]
             question_type = state.get("question_type", "general")
             processing_steps = state.get("processing_steps", [])
-            processing_steps.append("开始文档检索")
+            processing_steps.append("Starting document retrieval")
             
-            # 生成优化的搜索查询
+            # Generate optimized search query
             search_query = self._generate_search_query(question, question_type)
-            processing_steps.append(f"生成搜索查询: {search_query}")
+            processing_steps.append(f"Generated search query: {search_query}")
             
-            # 执行相似性搜索
+            # Execute similarity search
             retrieved_docs = self.vector_manager.similarity_search(
                 search_query, 
                 k=WHIConfig.RETRIEVAL_K
             )
             
-            processing_steps.append(f"检索到 {len(retrieved_docs)} 个相关文档")
+            processing_steps.append(f"Retrieved {len(retrieved_docs)} relevant documents")
             
             return {
                 "search_query": search_query,
@@ -293,13 +300,13 @@ Return only the category name.
             }
         except Exception as e:
             return {
-                "error": f"文档检索失败: {str(e)}",
+                "error": f"Document retrieval failed: {str(e)}",
                 "retrieved_documents": [],
-                "processing_steps": processing_steps + [f"文档检索失败: {str(e)}"]
+                "processing_steps": processing_steps + [f"Document retrieval failed: {str(e)}"]
             }
     
     def _generate_search_query(self, question: str, question_type: str) -> str:
-        """生成优化的搜索查询"""
+        """Generate optimized search query."""
         try:
             query_prompt = f"""
 Based on question type "{question_type}" and user question, generate keyword queries suitable for retrieval in WHI medical data.
@@ -317,78 +324,78 @@ Return only the search query, without any other content.
             
             return self.llm_client.generate_response(messages).strip()
         except:
-            # 如果生成失败，返回原始问题
+            # If generation fails, return original question
             return question
     
     def _generate_answer(self, state: WHIRAGState) -> Dict[str, Any]:
-        """增强的答案生成节点 - 支持上下文"""
+        """Enhanced answer generation node with context support."""
         try:
             question = state["question"]
             retrieved_docs = state.get("retrieved_documents", [])
             related_qa = state.get("related_previous_qa", [])
             context_summary = state.get("context_summary", "")
             processing_steps = state.get("processing_steps", [])
-            processing_steps.append("开始上下文感知答案生成")
+            processing_steps.append("Starting context-aware answer generation")
             
-            # 构建文档上下文
+            # Build document context
             context = self._build_context(retrieved_docs)
             
-            # 构建包含历史上下文的prompt
+            # Build prompt with historical context
             context_info = ""
             if related_qa:
-                context_info = "\n\n**相关历史对话：**\n"
+                context_info = "\n\n**Related Historical Conversations:**\n"
                 for i, qa in enumerate(related_qa, 1):
                     context_info += f"{i}. Q: {qa['question']}\n   A: {qa['answer']}\n\n"
             
-            if context_summary and context_summary != "无历史对话上下文":
-                context_info += f"\n**对话上下文总结：**\n{context_summary}\n\n"
+            if context_summary and context_summary != "No historical conversation context":
+                context_info += f"\n**Conversation Context Summary:**\n{context_summary}\n\n"
             
-            # 🔧 修改prompt，只约束格式，保持内容风格
+            # Modified prompt to constrain format while maintaining content style
             enhanced_prompt = f"""
-你是专业的WHI医学数据分析助手。请基于提供的文档上下文和对话历史回答用户问题。
+You are a professional WHI medical data analysis assistant. Please answer the user's question based on the provided document context and conversation history.
 
-用户当前问题：{question}
+User's current question: {question}
 
-文档上下文：
+Document context:
 {context}
 {context_info}
 
-**重要：请严格按照以下markdown格式要求输出，但保持你原有的专业回答风格和内容深度：**
+**Important: Please strictly follow the markdown format requirements below, while maintaining your professional answering style and content depth:**
 
-1. **标题格式**：使用 ## 作为主标题，### 作为子标题
-2. **列表格式**：使用 - 开头的无序列表，或 1. 开头的有序列表
-3. **强调格式**：重要信息用 **粗体** 标记
-4. **数值格式**：具体数值和单位用 **粗体** 突出显示
-5. **段落格式**：段落之间用空行分隔
+1. **Title format**: Use ## for main titles, ### for subtitles
+2. **List format**: Use - for unordered lists, or 1. for ordered lists
+3. **Emphasis format**: Mark important information with **bold**
+4. **Numerical format**: Highlight specific values and units with **bold**
+5. **Paragraph format**: Separate paragraphs with blank lines
 
-请保持你一贯的：
-- 准确、专业的医学术语使用
-- 准确、专业的答案
-- 如果与历史对话相关，请适当引用和关联
-- 详细的数据分析和解释
-- 客观的学术语调
-- 丰富的背景信息提供
-- 包含具体的数据和指标
+Please maintain your consistent:
+- Accurate, professional medical terminology usage
+- Accurate, professional answers
+- If related to previous questions, please reflect this relationship in the answer
+- Detailed data analysis and interpretation
+- Objective academic tone
+- Rich background information provision
+- Include specific data and indicators
 
-注意：如果当前问题与之前的问题相关，请在答案中体现这种关联性。
+Note: If the current question is related to previous questions, please reflect this relationship in your answer.
 
-确保输出格式标准化。
+Ensure standardized output format.
 """
             
             messages = [
-                {"role": "system", "content": "你是专业的医学数据分析助手，能够结合历史对话上下文提供准确答案。请严格遵循markdown格式要求，但保持专业的回答风格。"},
+                {"role": "system", "content": "You are a professional medical data analysis assistant who can provide accurate answers by combining historical conversation context. Please strictly follow markdown format requirements while maintaining a professional answering style."},
                 {"role": "user", "content": enhanced_prompt}
             ]
             
             answer = self.llm_client.generate_response(messages)
             
-            # 🔧 应用markdown格式标准化
+            # Apply markdown format standardization
             answer = self._ensure_markdown_format(answer)
             
-            # 提取源信息
+            # Extract source information
             sources = self._extract_sources(retrieved_docs)
             
-            processing_steps.append("上下文感知答案生成完成")
+            processing_steps.append("Context-aware answer generation completed")
             
             return {
                 "context": context,
@@ -399,13 +406,13 @@ Return only the search query, without any other content.
             
         except Exception as e:
             return {
-                "error": f"答案生成失败: {str(e)}",
-                "answer": "抱歉，生成答案时出现错误。",
-                "processing_steps": processing_steps + [f"答案生成失败: {str(e)}"]
+                "error": f"Answer generation failed: {str(e)}",
+                "answer": "Sorry, an error occurred while generating the answer.",
+                "processing_steps": processing_steps + [f"Answer generation failed: {str(e)}"]
             }
     
     def _build_context(self, documents: List) -> str:
-        """构建上下文字符串"""
+        """Build context string from retrieved documents."""
         if not documents:
             return "No relevant information found."
         
@@ -416,7 +423,7 @@ Return only the search query, without any other content.
         return "\n".join(context_parts)
     
     def _extract_sources(self, documents: List) -> List[Dict[str, Any]]:
-        """提取源信息"""
+        """Extract source information from documents."""
         sources = []
         for doc in documents:
             source_info = {
@@ -429,44 +436,44 @@ Return only the search query, without any other content.
         return sources
     
     def _summarize_answer(self, state: WHIRAGState) -> Dict[str, Any]:
-        """答案总结节点 - 第二个LLM调用"""
+        """Answer summarization node - second LLM call."""
         try:
             detailed_answer = state.get("answer", "")
             question = state["question"]
             processing_steps = state.get("processing_steps", [])
-            processing_steps.append("开始答案总结")
+            processing_steps.append("Starting answer summarization")
             
             if not detailed_answer:
                 return {
-                    "summary_answer": "无法生成答案总结",
-                    "processing_steps": processing_steps + ["详细答案为空，无法总结"]
+                    "summary_answer": "Unable to generate answer summary",
+                    "processing_steps": processing_steps + ["Detailed answer is empty, cannot summarize"]
                 }
             
-            # 总结prompt
+            # Summary prompt
             summary_prompt = f"""
-你是一个专业的医学数据分析助手。请将以下详细答案总结为简洁、易懂的回复，适合在聊天界面中显示。
+You are a professional medical data analysis assistant. Please summarize the following detailed answer into a concise, easy-to-understand reply suitable for display in a chat interface.
 
-用户问题：{question}
+User question: {question}
 
-详细答案：
+Detailed answer:
 {detailed_answer}
 
-请提供：
-1. 核心要点的简洁总结（2-3句话）
-2. 关键信息的提炼
-3. 保持专业性但易于理解
+Please provide:
+1. Concise summary of core points (2-3 sentences)
+2. Extraction of key information
+3. Maintain professionalism but keep it understandable
 
-总结应该简洁明了，长度控制在100-200字以内。
+The summary should be concise and clear, with length controlled within 100-200 words.
 """
             
             messages = [
-                {"role": "system", "content": "你是一个专业的医学数据分析助手，擅长将复杂的医学信息总结为简洁易懂的内容。"},
+                {"role": "system", "content": "You are a professional medical data analysis assistant, skilled at summarizing complex medical information into concise and understandable content."},
                 {"role": "user", "content": summary_prompt}
             ]
             
             summary_answer = self.llm_client.generate_response(messages)
             
-            processing_steps.append("答案总结完成")
+            processing_steps.append("Answer summarization completed")
             
             return {
                 "summary_answer": summary_answer,
@@ -474,23 +481,23 @@ Return only the search query, without any other content.
             }
         except Exception as e:
             return {
-                "summary_answer": "答案总结失败",
-                "error": f"答案总结失败: {str(e)}",
-                "processing_steps": processing_steps + [f"答案总结失败: {str(e)}"]
+                "summary_answer": "Answer summarization failed",
+                "error": f"Answer summarization failed: {str(e)}",
+                "processing_steps": processing_steps + [f"Answer summarization failed: {str(e)}"]
             }
     
     def _validate_answer(self, state: WHIRAGState) -> Dict[str, Any]:
-        """答案验证节点"""
+        """Answer validation node."""
         try:
             answer = state.get("answer", "")
             sources = state.get("sources", [])
             processing_steps = state.get("processing_steps", [])
-            processing_steps.append("开始答案验证")
+            processing_steps.append("Starting answer validation")
             
-            # 简单的置信度评估
+            # Simple confidence assessment
             confidence_score = self._calculate_confidence(answer, sources)
             
-            processing_steps.append(f"答案验证完成，置信度: {confidence_score:.2f}")
+            processing_steps.append(f"Answer validation completed, confidence: {confidence_score:.2f}")
             
             return {
                 "confidence_score": confidence_score,
@@ -499,45 +506,44 @@ Return only the search query, without any other content.
         except Exception as e:
             return {
                 "confidence_score": 0.0,
-                "error": f"答案验证失败: {str(e)}",
-                "processing_steps": processing_steps + [f"答案验证失败: {str(e)}"]
+                "error": f"Answer validation failed: {str(e)}",
+                "processing_steps": processing_steps + [f"Answer validation failed: {str(e)}"]
             }
     
     def _calculate_confidence(self, answer: str, sources: List[Dict[str, Any]]) -> float:
-        """计算置信度分数"""
+        """Calculate confidence score based on answer quality and source availability."""
         if not answer or not sources:
             return 0.0
         
-        # 基于答案长度和源数量的简单置信度计算
-        answer_length_score = min(len(answer) / 500, 1.0)  # 标准化到0-1
-        source_count_score = min(len(sources) / 5, 1.0)    # 标准化到0-1
+        # Simple confidence calculation based on answer length and source count
+        answer_length_score = min(len(answer) / 500, 1.0)  # Normalize to 0-1
+        source_count_score = min(len(sources) / 5, 1.0)    # Normalize to 0-1
         
-        # 综合评分
+        # Composite score
         confidence = (answer_length_score * 0.6 + source_count_score * 0.4)
         return round(confidence, 2)
     
     def _format_history_for_analysis(self, history: List[Dict]) -> str:
-        """格式化历史对话用于分析"""
+        """Format conversation history for analysis."""
         formatted = ""
-        for i, item in enumerate(history[-5:], 1):  # 只取最近5条
+        for i, item in enumerate(history[-5:], 1):  # Only take the last 5 entries
             formatted += f"{i}. Q: {item.get('question', '')}\n   A: {item.get('answer', '')}\n\n"
         return formatted
-
-
+    
     def _ensure_markdown_format(self, answer: str) -> str:
-        """确保答案符合标准markdown格式，但不改变内容"""
+        """Ensure answer follows standard markdown format without changing content."""
         import re
         
-        # 确保标题格式标准化
+        # Standardize title format
         answer = re.sub(r'^#{1,6}\s*(.+)$', lambda m: f"## {m.group(1).strip()}", answer, flags=re.MULTILINE)
         
-        # 确保列表格式标准化
+        # Standardize list format
         answer = re.sub(r'^[•·*]\s*', '- ', answer, flags=re.MULTILINE)
         
-        # 确保段落间距
+        # Ensure paragraph spacing
         answer = re.sub(r'\n{3,}', '\n\n', answer)
         
-        # 确保数值加粗（如果没有的话）
-        answer = re.sub(r'(?<!\*)\b(\d+(?:\.\d+)?\s*(?:g/dL|mg/dL|mmHg|%|年|岁|例|人|项))(?!\*)', r'**\1**', answer)
+        # Ensure numerical values are bolded (if not already)
+        answer = re.sub(r'(?<!\*)\b(\d+(?:\.\d+)?\s*(?:g/dL|mg/dL|mmHg|%|years|cases|people|items))(?!\*)', r'**\1**', answer)
         
         return answer.strip()
