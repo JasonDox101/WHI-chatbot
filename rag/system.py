@@ -40,13 +40,14 @@ class WHIRAGSystem:
             print(f"System initialization failed: {str(e)}")  
             raise
     
-    def process_question(self, question: str, conversation_history: List[Dict] = None) -> Dict[str, Any]:
-        """Process user question with conversation context support."""
+    def process_question(self, question: str, conversation_history: List[Dict] = None, output_language: str = "english") -> Dict[str, Any]:
+        """Process user question with conversation context and language support."""
         try:
-            # Initialize state with conversation history
+            # Initialize state with conversation history and language
             initial_state = {
                 "question": question,
                 "conversation_history": conversation_history or [],
+                "output_language": output_language,  # 确保语言参数被传递
                 "processing_steps": []
             }
             
@@ -328,12 +329,13 @@ Return only the search query, without any other content.
             return question
     
     def _generate_answer(self, state: WHIRAGState) -> Dict[str, Any]:
-        """Enhanced answer generation node with context support."""
+        """Generate answer node with language control."""
         try:
             question = state["question"]
             retrieved_docs = state.get("retrieved_documents", [])
             related_qa = state.get("related_previous_qa", [])
             context_summary = state.get("context_summary", "")
+            output_language = state.get("output_language", "english")  # 获取语言参数
             processing_steps = state.get("processing_steps", [])
             processing_steps.append("Starting context-aware answer generation")
             
@@ -350,8 +352,18 @@ Return only the search query, without any other content.
             if context_summary and context_summary != "No historical conversation context":
                 context_info += f"\n**Conversation Context Summary:**\n{context_summary}\n\n"
             
-            # Modified prompt to constrain format while maintaining content style
+            # 根据语言选择设置语言指令
+            if output_language == "chinese":
+                language_instruction = "请用中文回答。确保所有回答内容都使用中文，包括医学术语的中文表达。"
+                system_content = "你是一位专业的WHI医学数据分析助手，能够结合历史对话上下文提供准确答案。请严格遵循markdown格式要求，同时保持专业的回答风格。请用中文回答所有问题。"
+            else:
+                language_instruction = "Please respond in English. Ensure all content is in English, including medical terminology."
+                system_content = "You are a professional medical data analysis assistant who can provide accurate answers by combining historical conversation context. Please strictly follow markdown format requirements while maintaining a professional answering style. Please respond in English."
+            
+            # Modified prompt to include language control
             enhanced_prompt = f"""
+{language_instruction}
+
 You are a professional WHI medical data analysis assistant. Please answer the user's question based on the provided document context and conversation history.
 
 User's current question: {question}
@@ -383,7 +395,7 @@ Ensure standardized output format.
 """
             
             messages = [
-                {"role": "system", "content": "You are a professional medical data analysis assistant who can provide accurate answers by combining historical conversation context. Please strictly follow markdown format requirements while maintaining a professional answering style."},
+                {"role": "system", "content": system_content},
                 {"role": "user", "content": enhanced_prompt}
             ]
             
@@ -440,6 +452,7 @@ Ensure standardized output format.
         try:
             detailed_answer = state.get("answer", "")
             question = state["question"]
+            output_language = state.get("output_language", "english")  # 获取语言参数
             processing_steps = state.get("processing_steps", [])
             processing_steps.append("Starting answer summarization")
             
@@ -449,8 +462,26 @@ Ensure standardized output format.
                     "processing_steps": processing_steps + ["Detailed answer is empty, cannot summarize"]
                 }
             
-            # Summary prompt
-            summary_prompt = f"""
+            # 根据语言选择设置摘要prompt
+            if output_language == "chinese":
+                summary_prompt = f"""
+你是一位专业的医学数据分析助手。请将以下详细答案总结为简洁、易懂的回复，适合在聊天界面中显示。
+
+用户问题：{question}
+
+详细答案：
+{detailed_answer}
+
+请提供：
+1. 核心要点的简洁总结（2-3句话）
+2. 提取关键信息
+3. 保持专业性但易于理解
+
+摘要应简洁明了，长度控制在100-200字以内。请用中文回答。
+"""
+                system_content = "你是一位专业的医学数据分析助手，擅长将复杂的医学信息总结为简洁易懂的内容。请用中文回答。"
+            else:
+                summary_prompt = f"""
 You are a professional medical data analysis assistant. Please summarize the following detailed answer into a concise, easy-to-understand reply suitable for display in a chat interface.
 
 User question: {question}
@@ -463,11 +494,12 @@ Please provide:
 2. Extraction of key information
 3. Maintain professionalism but keep it understandable
 
-The summary should be concise and clear, with length controlled within 100-200 words.
+The summary should be concise and clear, with length controlled within 100-200 words. Please respond in English.
 """
+                system_content = "You are a professional medical data analysis assistant, skilled at summarizing complex medical information into concise and understandable content. Please respond in English."
             
             messages = [
-                {"role": "system", "content": "You are a professional medical data analysis assistant, skilled at summarizing complex medical information into concise and understandable content."},
+                {"role": "system", "content": system_content},
                 {"role": "user", "content": summary_prompt}
             ]
             

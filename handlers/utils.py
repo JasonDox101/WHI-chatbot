@@ -1,5 +1,24 @@
 from shiny import ui
 
+# 添加统一样式常量类
+class StyleConstants:
+    """统一的样式常量定义"""
+    
+    # 统一的强调样式
+    HIGHLIGHT_STYLE = "background: linear-gradient(120deg, #fef3c7 0%, #fde68a 100%); color: #92400e; padding: 0.1em 0.3em; border-radius: 3px; font-weight: 600; border: 1px solid #f59e0b;"
+    
+    # 统一的警告样式
+    WARNING_STYLE = "background: #fff3cd; color: #856404; border: 1px solid #fbbf24; padding: 12px 16px; border-radius: 8px;"
+    
+    # 统一的错误样式
+    ERROR_STYLE = "background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 8px;"
+    
+    # 统一的成功样式
+    SUCCESS_STYLE = "background: #c8e6c9; color: #2e7d32; border: 1px solid #81c784;"
+    
+    # 统一的信息样式
+    INFO_STYLE = "background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9;"
+
 class UIUtils:
     """UI utility class for creating application interface components"""
     
@@ -33,9 +52,33 @@ class UIUtils:
                         ],
                         style="flex: 1; text-align: center;"
                     ),
-                    # Right: Placeholder for symmetry
+                    # Right: Language toggle button - 简化版本
                     ui.div(
-                        style="flex: 0 0 auto; width: 60px;"
+                        ui.div(
+                            {
+                                "class": "language-toggle-container",
+                                "id": "language_toggle_container",
+                                "style": "position: relative; width: 60px; height: 30px; background: #f8f9fa; border-radius: 15px; cursor: pointer; transition: all 0.3s ease; border: 2px solid #451a03; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);"
+                            },
+                            [
+                                # 滑动指示器 - 只保留这个
+                                ui.div(
+                                    {
+                                        "class": "language-slider",
+                                        "id": "language_slider",
+                                        "style": "position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; background: linear-gradient(135deg, #451a03 0%, #6d2710 100%); border-radius: 12px; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: bold; box-shadow: 0 2px 4px rgba(69, 26, 3, 0.3);"
+                                    },
+                                    "EN"
+                                ),
+                                # 隐藏的按钮用于事件处理
+                                ui.input_action_button(
+                                    "toggle_language",
+                                    "",
+                                    style="position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: none; background: transparent;"
+                                )
+                            ]
+                        ),
+                        style="flex: 0 0 auto;"
                     )
                 )
             ),
@@ -145,6 +188,49 @@ class UIUtils:
                     transform: scale(1.05);
                 }
                 
+                /* Language toggle container styles - 简化版 */
+                .language-toggle-container {
+                    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+                }
+                
+                .language-toggle-container:hover {
+                    box-shadow: 0 3px 8px rgba(69, 26, 3, 0.2), inset 0 1px 3px rgba(0,0,0,0.1) !important;
+                    transform: translateY(-1px);
+                }
+                
+                /* 中文模式样式 */
+                .language-toggle-container.chinese .language-slider {
+                    left: 32px !important;
+                    background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+                }
+                
+                /* 滑块动画效果 */
+                .language-slider {
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                }
+                
+                /* 响应式优化 */
+                @media (max-width: 768px) {
+                    .language-toggle-container {
+                        width: 50px !important;
+                        height: 26px !important;
+                    }
+                    
+                    .language-slider {
+                        width: 20px !important;
+                        height: 20px !important;
+                        font-size: 9px !important;
+                    }
+                    
+                    .language-toggle-container.chinese .language-slider {
+                        left: 28px !important;
+                    }
+                }
+                
+                .language-toggle-container.chinese .language-slider {
+                    content: '中';
+                }
+                
                 /* Sidebar collapsed state */
                 .sidebar.collapsed {
                     width: 0 !important;
@@ -173,13 +259,23 @@ class UIUtils:
                     .sidebar.collapsed {
                         left: -400px;
                     }
+                    
+                    .language-toggle-container {
+                        width: 60px !important;
+                        height: 28px !important;
+                    }
+                    
+                    .language-slider {
+                        width: 28px !important;
+                        height: 20px !important;
+                    }
                 }
             """),
             
             # JavaScript code
             ui.tags.script("""
                 document.addEventListener('DOMContentLoaded', function() {
-                    // Keyboard event listener
+                    // Keyboard event listener for chat input
                     const chatInput = document.getElementById('chat_input');
                     if (chatInput) {
                         chatInput.addEventListener('keydown', function(event) {
@@ -191,6 +287,48 @@ class UIUtils:
                                 }
                             }
                         });
+                    }
+                    
+                    // 页面跳转输入框的Enter键支持 - 使用更可靠的方法
+                    function setupPageJumpInput() {
+                        const pageInput = document.getElementById('page_jump_input');
+                        if (pageInput) {
+                            // 移除之前的事件监听器
+                            pageInput.removeEventListener('keydown', pageInput._pageJumpHandler);
+                            
+                            // 创建新的事件处理器
+                            pageInput._pageJumpHandler = function(event) {
+                                if (event.key === 'Enter' && !event.shiftKey) {
+                                    event.preventDefault();
+                                    const pageValue = pageInput.value.trim();
+                                    if (pageValue && /^\d+$/.test(pageValue)) {
+                                        // 使用Shiny.setInputValue直接设置值
+                                        if (window.Shiny && window.Shiny.setInputValue) {
+                                            window.Shiny.setInputValue('page_jump_input', 'ENTER:' + pageValue, {priority: 'event'});
+                                            
+                                            // 延迟清空输入框
+                                            setTimeout(() => {
+                                                pageInput.value = '';
+                                            }, 100);
+                                        } else {
+                                            // 备用方法：直接设置值并触发change事件
+                                            pageInput.value = 'ENTER:' + pageValue;
+                                            const changeEvent = new Event('change', { bubbles: true });
+                                            pageInput.dispatchEvent(changeEvent);
+                                            
+                                            setTimeout(() => {
+                                                pageInput.value = '';
+                                                const clearEvent = new Event('change', { bubbles: true });
+                                                pageInput.dispatchEvent(clearEvent);
+                                            }, 100);
+                                        }
+                                    }
+                                }
+                            };
+                            
+                            // 添加事件监听器
+                            pageInput.addEventListener('keydown', pageInput._pageJumpHandler);
+                        }
                     }
                     
                     // Sidebar toggle functionality
@@ -215,7 +353,7 @@ class UIUtils:
                         });
                     }
                     
-                    // Add keyboard shortcut support (Ctrl+B to toggle sidebar)
+                    // Keyboard shortcut support (Ctrl+B to toggle sidebar)
                     document.addEventListener('keydown', function(event) {
                         if (event.ctrlKey && event.key === 'b') {
                             event.preventDefault();
@@ -223,6 +361,47 @@ class UIUtils:
                                 toggleButton.click();
                             }
                         }
+                    });
+                    
+                    // ⚡ 简化JavaScript逻辑
+                    const languageContainer = document.getElementById('language_toggle_container');
+                    const languageSlider = document.getElementById('language_slider');
+                    
+                    if (languageContainer && languageSlider) {
+                        let isEnglish = true;
+                        
+                        languageContainer.addEventListener('click', function() {
+                            isEnglish = !isEnglish;
+                            
+                            if (isEnglish) {
+                                languageContainer.classList.remove('chinese');
+                                languageSlider.style.left = '2px';
+                                languageSlider.textContent = 'EN';
+                                languageSlider.style.background = 'linear-gradient(135deg, #451a03 0%, #6d2710 100%)';
+                            } else {
+                                languageContainer.classList.add('chinese');
+                                languageSlider.style.left = '32px';
+                                languageSlider.textContent = '中';
+                                languageSlider.style.background = 'linear-gradient(135deg, #d97706 0%, #b45309 100%)';
+                            }
+                        });
+                    }
+                    
+                    // 初始设置页面跳转输入框
+                    setupPageJumpInput();
+                    
+                    // 监听DOM变化，确保动态生成的输入框也有事件监听
+                    const observer = new MutationObserver(function(mutations) {
+                        mutations.forEach(function(mutation) {
+                            if (mutation.type === 'childList') {
+                                setupPageJumpInput();
+                            }
+                        });
+                    });
+                    
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true
                     });
                 });
             """),

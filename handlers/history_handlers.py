@@ -89,3 +89,27 @@ class HistoryHandlers:
         def handle_goto_latest():
             """Return to latest answer"""
             self.current_history_index.set(-1)
+    
+    def jump_to_page(self, page_num: int):
+        """Jump to specific page number"""
+        history = self.answer_history.get()
+        
+        if not history:
+            return
+        
+        try:
+            # 修正页码逻辑：
+            # 页码1到n-1对应历史记录index 0到n-2
+            # 页码n对应latest (index=-1)
+            total_pages = len(history)
+            
+            if 1 <= page_num < total_pages:
+                # 跳转到历史记录（页码1对应index 0）
+                target_index = page_num - 1
+                self.current_history_index.set(target_index)
+            elif page_num == total_pages:
+                # 跳转到最新（latest，第n页）
+                self.current_history_index.set(-1)
+        except (ValueError, TypeError):
+            # 输入不是有效数字，忽略
+            pass

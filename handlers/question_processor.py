@@ -1,5 +1,6 @@
 import markdown
 import re
+from .utils import StyleConstants
 
 class QuestionProcessor:
     """Question processor class for handling user queries"""
@@ -15,7 +16,7 @@ class QuestionProcessor:
         if not raw_answer.strip().startswith('#'):
             raw_answer = f"## Detailed Analysis\n\n{raw_answer}"
         
-        # Standardize heading format
+        # Standardize title format
         raw_answer = re.sub(r'^#{1,6}\s*(.+)$', lambda m: f"## {m.group(1).strip()}", raw_answer, flags=re.MULTILINE)
         
         # Standardize list format
@@ -24,13 +25,76 @@ class QuestionProcessor:
         # Ensure proper paragraph spacing
         raw_answer = re.sub(r'\n{3,}', '\n\n', raw_answer)
         
-        # Standardize numerical value display
-        raw_answer = re.sub(r'(\d+(?:\.\d+)?\s*(?:g/dL|mg/dL|mmHg|%|years|yrs))', r'**\1**', raw_answer)
+        # 改进的数值范围显示格式 - 更全面的匹配
+        # 1. 基本数值+单位格式
+        raw_answer = re.sub(r'(\d+(?:\.\d+)?(?:\s*[–—-]\s*\d+(?:\.\d+)?)?\s*(?:g/dL|mg/dL|mmHg|%|years|yrs|IU/L|μg/L|ng/mL|毫克|克))', r'**\1**', raw_answer)
+        
+        # 2. 置信区间格式
+        raw_answer = re.sub(r'(\d+%\s*CI:\s*\d+(?:\.\d+)?[–—-]\d+(?:\.\d+)?)', r'**\1**', raw_answer)
+        
+        # 3. 风险比和比值比格式
+        raw_answer = re.sub(r'((?:HR|RR|OR)\s*=\s*\d+(?:\.\d+)?)', r'**\1**', raw_answer)
+        
+        # 4. 独立的百分比
+        raw_answer = re.sub(r'(?<!\*)\b(\d+(?:\.\d+)?%)(?!\*)', r'**\1**', raw_answer)
+        
+        # 5. 年龄范围（中文）
+        raw_answer = re.sub(r'(\d+[–—-]\d+岁)', r'**\1**', raw_answer)
+        
+        # 6. 样本量格式
+        raw_answer = re.sub(r'(n\s*=\s*\d+(?:,\d+)*)', r'**\1**', raw_answer)
+        
+        # 7. 相对风险降低格式
+        raw_answer = re.sub(r'(降低\d+(?:\.\d+)?%)', r'**\1**', raw_answer)
         
         return raw_answer.strip()
     
-    async def process_question(self, question: str, chat_messages: list):
-        """Main logic for processing questions"""
+    @staticmethod
+    def format_summary_answer(raw_summary: str) -> str:
+        """Format summary answer for clean text display in chat"""
+        # Apply standardization
+        formatted_summary = QuestionProcessor.standardize_detailed_answer_format(raw_summary)
+        
+        # Clean up markdown formatting for better plain text display
+        # Remove markdown headers and replace with clean titles
+        formatted_summary = re.sub(r'^#{1,6}\s*(.+)$', r'📋 \1\n', formatted_summary, flags=re.MULTILINE)
+        
+        # Convert markdown lists to clean bullet points with proper spacing
+        formatted_summary = re.sub(r'^-\s*', '• ', formatted_summary, flags=re.MULTILINE)
+        
+        # Remove markdown bold syntax but keep content emphasis
+        formatted_summary = re.sub(r'\*\*(.+?)\*\*', r'\1', formatted_summary)
+        
+        # Clean up excessive line breaks and add proper paragraph spacing
+        lines = formatted_summary.split('\n')
+        cleaned_lines = []
+        
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Add spacing before section headers
+            if line.startswith('📋') and cleaned_lines:
+                cleaned_lines.append('')
+                
+            # Add spacing before bullet point sections
+            if line.startswith('• ') and cleaned_lines and not cleaned_lines[-1].startswith('• '):
+                if cleaned_lines[-1] != '':
+                    cleaned_lines.append('')
+            
+            cleaned_lines.append(line)
+        
+        # Join with proper spacing
+        result = '\n'.join(cleaned_lines)
+        
+        # Final cleanup - ensure no more than 2 consecutive newlines
+        result = re.sub(r'\n{3,}', '\n\n', result)
+        
+        return result.strip()
+
+    async def process_question(self, question: str, chat_messages: list, output_language: str = "english"):
+        """Main logic for processing questions with language control"""
         try:
             if self.rag_system and self.system_ready:
                 # Get conversation history
@@ -58,8 +122,8 @@ class QuestionProcessor:
                 if len(conversation_history) > 3:  # Keep only the most recent 3 complete conversations
                     conversation_history = conversation_history[-3:]
                 
-                # Process using RAG system, passing conversation history
-                result = self.rag_system.process_question(question, conversation_history)
+                # Process using RAG system with language parameter
+                result = self.rag_system.process_question(question, conversation_history, output_language)
                 
                 # Get detailed answer and summary answer
                 detailed_answer = result.get('answer', 'No answer generated')
@@ -77,8 +141,11 @@ class QuestionProcessor:
                 # Format detailed answer
                 formatted_detailed_answer = self._format_detailed_answer(markdown_answer, confidence, sources)
                 
+                # 在返回结果前格式化summary_answer
+                formatted_summary = self.format_summary_answer(summary_answer)
+                
                 return {
-                    'summary_answer': summary_answer,
+                    'summary_answer': formatted_summary,  # 返回格式化的HTML
                     'detailed_answer': formatted_detailed_answer
                 }
             else:
@@ -88,7 +155,7 @@ class QuestionProcessor:
         except Exception as e:
             error_msg = f"Error processing question: {str(e)}"
             formatted_error = f"""
-            <div style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 8px;">
+            <div style="{StyleConstants.ERROR_STYLE}">
                 <div style="display: flex; align-items: center; margin-bottom: 10px;">
                     <span style="font-size: 1.2rem; margin-right: 8px;">⚠️</span>
                     <strong>Processing Error</strong>
@@ -191,7 +258,7 @@ class QuestionProcessor:
             </div>
         </div>
 
-        <div style="background: #fff3cd; color: #856404; padding: 12px 16px; border-radius: 8px; text-align: center; font-size: 0.85rem; margin-top: 15px;">
+        <div style="{StyleConstants.WARNING_STYLE} text-align: center; font-size: 0.85rem; margin-top: 15px;">
             ⚠️ Currently in demo mode, recommend enabling RAG system for more accurate answers
         </div>
         """

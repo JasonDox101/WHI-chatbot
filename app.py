@@ -1,7 +1,6 @@
 from shiny import App, ui, render, reactive, Inputs, Outputs, Session
 import asyncio
 from datetime import datetime
-import markdown
 from pathlib import Path
 
 # Import project modules
@@ -10,12 +9,11 @@ from rag.system import WHIRAGSystem
 from handlers import UIComponents, MessageHandlers, HistoryHandlers, QuestionProcessor
 from handlers.utils import UIUtils
 
-# Initialize configuration and system
+# 简化系统初始化
 config = WHIConfig()
-system_ready = False
 rag_system = None
+system_ready = False
 
-# Attempt to initialize RAG system
 try:
     rag_system = WHIRAGSystem()
     system_ready = True
@@ -23,26 +21,46 @@ try:
 except Exception as e:
     print(f"⚠️ RAG system initialization failed: {e}")
     print("🔄 Using demo mode")
-    rag_system = None
 
-# Create UI using UIUtils
 app_ui = UIUtils.create_app_ui()
-
 
 def server(input: Inputs, output: Outputs, session: Session):
     # Reactive values
     chat_messages = reactive.Value([])
     current_answer = reactive.Value("")
     is_processing = reactive.Value(False)
+    output_language = reactive.Value("english")
     
     # Initialize processors
     question_processor = QuestionProcessor(rag_system, system_ready)
     history_manager = HistoryHandlers()
     message_handlers = MessageHandlers(question_processor, history_manager)
     
-    # Setup event handlers
-    message_handlers.setup_handlers(input, chat_messages, current_answer, is_processing)
+    # Language toggle handler
+    @reactive.Effect
+    @reactive.event(input.toggle_language)
+    def handle_language_toggle():
+        current_lang = output_language.get()
+        new_lang = "chinese" if current_lang == "english" else "english"
+        output_language.set(new_lang)
+    
+    # Setup handlers
+    message_handlers.setup_handlers(input, chat_messages, current_answer, is_processing, output_language)
     history_manager.setup_navigation_handlers(input)
+    
+    # 修改页面跳转处理器，只处理Enter键触发的事件
+    @reactive.Effect
+    @reactive.event(input.page_jump_input)
+    def handle_page_jump():
+        """Handle page jump when user presses Enter"""
+        page_input = input.page_jump_input()
+        if page_input and page_input.startswith('ENTER:'):
+            try:
+                page_num_str = page_input.replace('ENTER:', '').strip()
+                page_num = int(page_num_str)
+                history_manager.jump_to_page(page_num)
+            except ValueError:
+                pass  # 忽略无效输入
     
     # UI rendering functions
     @output
@@ -76,18 +94,8 @@ def server(input: Inputs, output: Outputs, session: Session):
             history_manager.answer_history.get(), 
             history_manager.current_history_index.get()
         )
-    
-    @output
-    @render.ui
-    def context_status():
-        return UIComponents.context_status(chat_messages.get())
 
-# Create application
-app = App(
-    app_ui, 
-    server,
-    static_assets=Path(__file__).parent / "static"
-)
+app = App(app_ui, server, static_assets=Path(__file__).parent / "static")
 
 if __name__ == "__main__":
     app.run()

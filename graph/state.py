@@ -6,6 +6,9 @@ class WHIRAGState(TypedDict):
     # User input
     question: str
     
+    # Language control
+    output_language: Optional[str]  # 新增：输出语言控制
+    
     # Conversation history context
     conversation_history: Optional[List[Dict[str, Any]]]  # Historical conversation records
     context_summary: Optional[str]  # Context summary
