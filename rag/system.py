@@ -47,7 +47,7 @@ class WHIRAGSystem:
             initial_state = {
                 "question": question,
                 "conversation_history": conversation_history or [],
-                "output_language": output_language,  # 确保语言参数被传递
+                "output_language": output_language,
                 "processing_steps": []
             }
             
@@ -59,6 +59,12 @@ class WHIRAGSystem:
             
             return result
         except Exception as e:
+            # 添加详细的错误日志
+            print(f"详细错误信息: {str(e)}")
+            print(f"错误类型: {type(e).__name__}")
+            import traceback
+            print(f"错误堆栈: {traceback.format_exc()}")
+            
             return {
                 "error": f"Question processing failed: {str(e)}",
                 "answer": "Sorry, an error occurred while processing your question.",
@@ -89,113 +95,137 @@ class WHIRAGSystem:
             print(f"Failed to save conversation memory: {str(e)}")
     
     def _build_workflow(self) -> None:
-        """Build enhanced LangGraph workflow."""
+        """Build optimized LangGraph workflow with reduced LLM calls."""
         workflow = StateGraph(WHIRAGState)
         
-        # Add nodes
-        workflow.add_node("analyze_context", self._analyze_context)
-        workflow.add_node("classify_question", self._classify_question)
+        # Add optimized nodes - reduced from 6 to 4 nodes
+        workflow.add_node("analyze_context_and_classify", self._analyze_context_and_classify)
         workflow.add_node("retrieve_documents", self._retrieve_documents)
-        workflow.add_node("generate_answer", self._generate_answer)
-        workflow.add_node("summarize_answer", self._summarize_answer)
+        workflow.add_node("generate_and_summarize_answer", self._generate_and_summarize_answer)
         workflow.add_node("validate_answer", self._validate_answer)
         
-        # Set edges - new workflow
-        workflow.set_entry_point("analyze_context")
-        workflow.add_edge("analyze_context", "classify_question")
-        workflow.add_edge("classify_question", "retrieve_documents")
-        workflow.add_edge("retrieve_documents", "generate_answer")
-        workflow.add_edge("generate_answer", "summarize_answer")
-        workflow.add_edge("summarize_answer", "validate_answer")
+        # Set optimized edges - simplified workflow
+        workflow.set_entry_point("analyze_context_and_classify")
+        workflow.add_edge("analyze_context_and_classify", "retrieve_documents")
+        workflow.add_edge("retrieve_documents", "generate_and_summarize_answer")
+        workflow.add_edge("generate_and_summarize_answer", "validate_answer")
         workflow.add_edge("validate_answer", END)
         
         self.workflow = workflow.compile()
     
-    def _analyze_context(self, state: WHIRAGState) -> Dict[str, Any]:
-        """Analyze conversation context node."""
+    def _analyze_context_and_classify(self, state: WHIRAGState) -> Dict[str, Any]:
+        """Combined context analysis and question classification - First LLM call."""
         try:
             question = state["question"]
             history = state.get("conversation_history", [])
             processing_steps = state.get("processing_steps", [])
-            processing_steps.append("Starting context analysis")
+            processing_steps.append("Starting combined context analysis and question classification")
             
+            # Build comprehensive prompt for both tasks
             if not history:
-                return {
-                    "context_summary": "No historical conversation context",
-                    "related_previous_qa": [],
-                    "is_context_related": False,
-                    "processing_steps": processing_steps
-                }
+                context_info = "No historical conversation context available."
+            else:
+                context_info = f"Historical conversations:\n{self._format_history_for_analysis(history)}"
             
-            # Enhanced context analysis prompt
-            context_prompt = f"""
-You are a WHI medical data analysis expert. Please carefully analyze the relationship between the current question and historical conversations.
+            combined_prompt = f"""
+You are a WHI medical data analysis expert. Please perform two tasks simultaneously:
+
+**Task 1: Context Analysis**
+Analyze the relationship between the current question and historical conversations.
 
 Current question: {question}
 
-Historical conversations:
-{self._format_history_for_analysis(history)}
+{context_info}
 
-Analysis requirements:
-1. Check if the current question references concepts, values, variable names mentioned previously
-2. Determine if previous answers are needed to answer the current question
-3. Identify relevant historical Q&A pairs
-4. Generate a concise context summary
+Determine:
+1. Is the current question related to previous conversations?
+2. Which historical Q&A pairs are relevant?
+3. Generate a concise context summary
 
-Please return in JSON format (ensure correct format):
+**Task 2: Question Classification**
+Classify the question into one of these categories:
+- "variable": Questions about specific variables, measurements, or data fields
+- "dataset": Questions about datasets, studies, or data collection methods  
+- "general": General questions about WHI research, methodology, or interpretation
+
+Please return results in JSON format:
 {{
-    "is_related": true,
-    "context_summary": "Concise context summary",
-    "related_qa_indices": [0, 1],
-    "reasoning": "Detailed reasoning for relationship analysis"
+    "context_analysis": {{
+        "is_related": true/false,
+        "context_summary": "summary text",
+        "related_qa_indices": [0, 1],
+        "reasoning": "detailed reasoning"
+    }},
+    "question_classification": {{
+        "question_type": "variable/dataset/general",
+        "classification_reasoning": "reasoning for classification"
+    }}
 }}
 """
             
             messages = [
-                {"role": "system", "content": "You are a professional medical data analysis assistant, skilled at analyzing conversation context relationships. Please return results strictly in JSON format."},
-                {"role": "user", "content": context_prompt}
+                {"role": "system", "content": "You are a professional medical data analysis assistant, skilled at analyzing conversation context and classifying questions. Please return results strictly in JSON format."},
+                {"role": "user", "content": combined_prompt}
             ]
             
             try:
-                analysis_result = self.llm_client.generate_response(messages)
-                
+                combined_result = self.llm_client.generate_response(messages)
                 # Clean possible markdown format
-                if "```json" in analysis_result:
-                    analysis_result = analysis_result.split("```json")[1].split("```")[0].strip()
-                elif "```" in analysis_result:
-                    analysis_result = analysis_result.split("```")[1].strip()
+                if "```json" in combined_result:
+                    combined_result = combined_result.split("```json")[1].split("```")[0].strip()
+                elif "```" in combined_result:
+                    combined_result = combined_result.split("```")[1].strip()
                 
-                analysis = json.loads(analysis_result)
+                # 尝试解析JSON
+                try:
+                    result = json.loads(combined_result)
+                    context_analysis = result.get("context_analysis", {})
+                    question_classification = result.get("question_classification", {})
+                except json.JSONDecodeError as json_error:
+                    print(f"JSON解析失败: {json_error}")
+                    print(f"尝试解析的内容: {combined_result}")
+                    # 使用fallback方法
+                    context_analysis = self._enhanced_context_analysis(question, history)
+                    question_classification = {"question_type": "general", "classification_reasoning": "JSON解析失败，使用fallback"}
+                
             except Exception as e:
-                # If LLM analysis fails, use enhanced keyword matching
-                analysis = self._enhanced_context_analysis(question, history)
+                print(f"LLM调用失败: {str(e)}")
+                # Fallback to enhanced analysis if LLM fails
+                context_analysis = self._enhanced_context_analysis(question, history)
+                question_classification = {"question_type": "general", "classification_reasoning": "LLM调用失败，使用fallback"}
             
             # Extract relevant historical Q&A
             related_qa = []
-            if analysis.get("is_related", False):
-                for idx in analysis.get("related_qa_indices", []):
+            if context_analysis.get("is_related", False):
+                for idx in context_analysis.get("related_qa_indices", []):
                     if 0 <= idx < len(history):
                         related_qa.append({
                             "question": history[idx]["question"],
                             "answer": history[idx]["answer"]
                         })
             
-            processing_steps.append("Context analysis completed")
+            question_type = question_classification.get("question_type", "general")
+            if question_type not in ["variable", "dataset", "general"]:
+                question_type = "general"
+            
+            processing_steps.append("Combined context analysis and question classification completed")
             
             return {
-                "context_summary": analysis.get("context_summary", ""),
+                "context_summary": context_analysis.get("context_summary", ""),
                 "related_previous_qa": related_qa,
-                "is_context_related": analysis.get("is_related", False),
+                "is_context_related": context_analysis.get("is_related", False),
+                "question_type": question_type,
                 "processing_steps": processing_steps
             }
             
         except Exception as e:
             return {
-                "context_summary": "Context analysis failed",
+                "context_summary": "Analysis failed",
                 "related_previous_qa": [],
                 "is_context_related": False,
-                "error": f"Context analysis failed: {str(e)}",
-                "processing_steps": processing_steps + [f"Context analysis failed: {str(e)}"]
+                "question_type": "general",
+                "error": f"Combined analysis failed: {str(e)}",
+                "processing_steps": processing_steps + [f"Combined analysis failed: {str(e)}"]
             }
     
     def _enhanced_context_analysis(self, question: str, history: List[Dict]) -> Dict[str, Any]:
@@ -230,50 +260,6 @@ Please return in JSON format (ensure correct format):
             "reasoning": "Enhanced analysis based on keyword matching and medical term recognition"
         }
     
-    def _classify_question(self, state: WHIRAGState) -> Dict[str, Any]:
-        """Question classification node."""
-        try:
-            question = state["question"]
-            processing_steps = state.get("processing_steps", [])
-            processing_steps.append("Starting question classification")
-            
-            classification_prompt = f"""
-Please classify the following question about WHI (Women's Health Initiative) data:
-
-Question: {question}
-
-Classify into one of these categories:
-- "variable": Questions about specific variables, measurements, or data fields
-- "dataset": Questions about datasets, studies, or data collection methods
-- "general": General questions about WHI research, methodology, or interpretation
-
-Return only the category name.
-"""
-            
-            messages = [
-                {"role": "system", "content": "You are a professional medical data analysis assistant."},
-                {"role": "user", "content": classification_prompt}
-            ]
-            
-            question_type = self.llm_client.generate_response(messages).strip().lower()
-            
-            # Ensure classification result is valid
-            if question_type not in ["variable", "dataset", "general"]:
-                question_type = "general"
-            
-            processing_steps.append(f"Question classification completed: {question_type}")
-            
-            return {
-                "question_type": question_type,
-                "processing_steps": processing_steps
-            }
-        except Exception as e:
-            return {
-                "question_type": "general",
-                "error": f"Question classification failed: {str(e)}",
-                "processing_steps": processing_steps + [f"Question classification failed: {str(e)}"]
-            }
-    
     def _retrieve_documents(self, state: WHIRAGState) -> Dict[str, Any]:
         """Document retrieval node."""
         try:
@@ -307,37 +293,34 @@ Return only the category name.
             }
     
     def _generate_search_query(self, question: str, question_type: str) -> str:
-        """Generate optimized search query."""
-        try:
-            query_prompt = f"""
-Based on question type "{question_type}" and user question, generate keyword queries suitable for retrieval in WHI medical data.
-
-User question: {question}
-
-Please extract key medical terms, variable names, or dataset names to generate concise search queries.
-Return only the search query, without any other content.
-"""
-            
-            messages = [
-                {"role": "system", "content": "You are a professional medical research assistant."},
-                {"role": "user", "content": query_prompt}
-            ]
-            
-            return self.llm_client.generate_response(messages).strip()
-        except:
-            # If generation fails, return original question
-            return question
+        """Generate optimized search query without LLM call."""
+        # Simple keyword extraction without LLM call to save resources
+        import re
+        
+        # Extract medical terms and key phrases
+        medical_terms = re.findall(r'\b(?:hemoglobin|hgb|blood|pressure|cholesterol|bmi|weight|height|mesa|whi)\b', question.lower())
+        
+        # Extract numbers and units
+        numeric_terms = re.findall(r'\b\d+(?:\.\d+)?\s*(?:g/dL|mg/dL|mmHg|%|years)\b', question.lower())
+        
+        # Combine terms
+        search_terms = medical_terms + numeric_terms
+        
+        if search_terms:
+            return ' '.join(search_terms)
+        else:
+            return question  # Fallback to original question
     
-    def _generate_answer(self, state: WHIRAGState) -> Dict[str, Any]:
-        """Generate answer node with language control."""
+    def _generate_and_summarize_answer(self, state: WHIRAGState) -> Dict[str, Any]:
+        """Combined answer generation and summarization - Second LLM call."""
         try:
             question = state["question"]
             retrieved_docs = state.get("retrieved_documents", [])
             related_qa = state.get("related_previous_qa", [])
             context_summary = state.get("context_summary", "")
-            output_language = state.get("output_language", "english")  # 获取语言参数
+            output_language = state.get("output_language", "english")
             processing_steps = state.get("processing_steps", [])
-            processing_steps.append("Starting context-aware answer generation")
+            processing_steps.append("Starting combined answer generation and summarization")
             
             # Build document context
             context = self._build_context(retrieved_docs)
@@ -352,7 +335,7 @@ Return only the search query, without any other content.
             if context_summary and context_summary != "No historical conversation context":
                 context_info += f"\n**Conversation Context Summary:**\n{context_summary}\n\n"
             
-            # 根据语言选择设置语言指令
+            # Language-specific instructions
             if output_language == "chinese":
                 language_instruction = "请用中文回答。确保所有回答内容都使用中文，包括医学术语的中文表达。"
                 system_content = "你是一位专业的WHI医学数据分析助手，能够结合历史对话上下文提供准确答案。请严格遵循markdown格式要求，同时保持专业的回答风格。请用中文回答所有问题。"
@@ -360,67 +343,95 @@ Return only the search query, without any other content.
                 language_instruction = "Please respond in English. Ensure all content is in English, including medical terminology."
                 system_content = "You are a professional medical data analysis assistant who can provide accurate answers by combining historical conversation context. Please strictly follow markdown format requirements while maintaining a professional answering style. Please respond in English."
             
-            # Modified prompt to include language control
-            enhanced_prompt = f"""
-{language_instruction}
-
-You are a professional WHI medical data analysis assistant. Please answer the user's question based on the provided document context and conversation history.
-
-User's current question: {question}
-
-Document context:
-{context}
-{context_info}
-
-**Important: Please strictly follow the markdown format requirements below, while maintaining your professional answering style and content depth:**
-
-1. **Title format**: Use ## for main titles, ### for subtitles
-2. **List format**: Use - for unordered lists, or 1. for ordered lists
-3. **Emphasis format**: Mark important information with **bold**
-4. **Numerical format**: Highlight specific values and units with **bold**
-5. **Paragraph format**: Separate paragraphs with blank lines
-
-Please maintain your consistent:
-- Accurate, professional medical terminology usage
-- Accurate, professional answers
-- If related to previous questions, please reflect this relationship in the answer
-- Detailed data analysis and interpretation
-- Objective academic tone
-- Rich background information provision
-- Include specific data and indicators
-
-Note: If the current question is related to previous questions, please reflect this relationship in your answer.
-
-Ensure standardized output format.
-"""
+            # 在_generate_and_summarize_answer方法中，将combined_prompt修改为：
+            combined_prompt = f"""
+            {language_instruction}
+            
+            You are a professional WHI medical data analysis assistant. Please provide BOTH a comprehensive detailed answer and a concise summary.
+            
+            User's current question: {question}
+            
+            Document context:
+            {context}
+            {context_info}
+            
+            **Please provide your response in the following JSON format:**
+            {{
+                "detailed_answer": "Your comprehensive, professional answer with markdown formatting...",
+                "summary_answer": "A concise summary for chat display..."
+            }}
+            
+            **CRITICAL: For detailed_answer, provide COMPREHENSIVE and THOROUGH analysis:**
+            1. **No Length Restrictions**: Provide as much detail as necessary to fully address the question
+            2. **Complete Coverage**: Include all relevant background information, methodology, and statistical details
+            3. **Rich Context**: Provide comprehensive medical and research context
+            4. **Detailed Data**: Include specific numbers, percentages, research findings, and comparative analysis
+            5. **Clinical Implications**: Thoroughly discuss clinical significance and practical applications
+            6. **Structured Organization**: Use clear headings, subheadings, and well-organized sections
+            7. **Comprehensive Analysis**: Cover all aspects of the question with in-depth explanations
+            
+            **For summary_answer (separate from detailed answer):**
+            1. Keep concise (3-4 sentences, 200-300 words)
+            2. Extract only the most critical findings
+            3. Suitable for quick chat display
+            
+            **Formatting requirements for detailed_answer:**
+            - Use ## for main titles, ### for subtitles
+            - Use - for lists, **bold** for emphasis
+            - Include specific data points and statistical values
+            - Provide comprehensive background and context
+            - Maintain professional medical terminology
+            - Add detailed explanations and interpretations
+            
+            IMPORTANT: The detailed_answer should be as comprehensive and thorough as possible, with NO length limitations. Provide complete, in-depth analysis that fully addresses all aspects of the question.
+            """
             
             messages = [
                 {"role": "system", "content": system_content},
-                {"role": "user", "content": enhanced_prompt}
+                {"role": "user", "content": combined_prompt}
             ]
             
-            answer = self.llm_client.generate_response(messages)
+            combined_response = self.llm_client.generate_response(messages)
             
-            # Apply markdown format standardization
-            answer = self._ensure_markdown_format(answer)
+            try:
+                # Clean possible markdown format
+                if "```json" in combined_response:
+                    combined_response = combined_response.split("```json")[1].split("```")[0].strip()
+                elif "```" in combined_response:
+                    combined_response = combined_response.split("```")[1].strip()
+                
+                response_data = json.loads(combined_response)
+                detailed_answer = response_data.get("detailed_answer", "")
+                summary_answer = response_data.get("summary_answer", "")
+                
+            except Exception as e:
+                # Fallback: split the response manually if JSON parsing fails
+                lines = combined_response.split('\n')
+                detailed_answer = combined_response
+                summary_answer = ' '.join(lines[:3]) if len(lines) >= 3 else combined_response[:200]
+            
+            # Apply markdown format standardization to detailed answer
+            detailed_answer = self._ensure_markdown_format(detailed_answer)
             
             # Extract source information
             sources = self._extract_sources(retrieved_docs)
             
-            processing_steps.append("Context-aware answer generation completed")
+            processing_steps.append("Combined answer generation and summarization completed")
             
             return {
                 "context": context,
-                "answer": answer,
+                "answer": detailed_answer,
+                "summary_answer": summary_answer,
                 "sources": sources,
                 "processing_steps": processing_steps
             }
             
         except Exception as e:
             return {
-                "error": f"Answer generation failed: {str(e)}",
+                "error": f"Combined answer generation failed: {str(e)}",
                 "answer": "Sorry, an error occurred while generating the answer.",
-                "processing_steps": processing_steps + [f"Answer generation failed: {str(e)}"]
+                "summary_answer": "Unable to process your question at this time.",
+                "processing_steps": processing_steps + [f"Combined answer generation failed: {str(e)}"]
             }
     
     def _build_context(self, documents: List) -> str:
@@ -446,77 +457,6 @@ Ensure standardized output format.
             }
             sources.append(source_info)
         return sources
-    
-    def _summarize_answer(self, state: WHIRAGState) -> Dict[str, Any]:
-        """Answer summarization node - second LLM call."""
-        try:
-            detailed_answer = state.get("answer", "")
-            question = state["question"]
-            output_language = state.get("output_language", "english")  # 获取语言参数
-            processing_steps = state.get("processing_steps", [])
-            processing_steps.append("Starting answer summarization")
-            
-            if not detailed_answer:
-                return {
-                    "summary_answer": "Unable to generate answer summary",
-                    "processing_steps": processing_steps + ["Detailed answer is empty, cannot summarize"]
-                }
-            
-            # 根据语言选择设置摘要prompt
-            if output_language == "chinese":
-                summary_prompt = f"""
-你是一位专业的医学数据分析助手。请将以下详细答案总结为简洁、易懂的回复，适合在聊天界面中显示。
-
-用户问题：{question}
-
-详细答案：
-{detailed_answer}
-
-请提供：
-1. 核心要点的简洁总结（2-3句话）
-2. 提取关键信息
-3. 保持专业性但易于理解
-
-摘要应简洁明了，长度控制在100-200字以内。请用中文回答。
-"""
-                system_content = "你是一位专业的医学数据分析助手，擅长将复杂的医学信息总结为简洁易懂的内容。请用中文回答。"
-            else:
-                summary_prompt = f"""
-You are a professional medical data analysis assistant. Please summarize the following detailed answer into a concise, easy-to-understand reply suitable for display in a chat interface.
-
-User question: {question}
-
-Detailed answer:
-{detailed_answer}
-
-Please provide:
-1. Concise summary of core points (2-3 sentences)
-2. Extraction of key information
-3. Maintain professionalism but keep it understandable
-
-The summary should be concise and clear, with length controlled within 100-200 words. Please respond in English.
-"""
-                system_content = "You are a professional medical data analysis assistant, skilled at summarizing complex medical information into concise and understandable content. Please respond in English."
-            
-            messages = [
-                {"role": "system", "content": system_content},
-                {"role": "user", "content": summary_prompt}
-            ]
-            
-            summary_answer = self.llm_client.generate_response(messages)
-            
-            processing_steps.append("Answer summarization completed")
-            
-            return {
-                "summary_answer": summary_answer,
-                "processing_steps": processing_steps
-            }
-        except Exception as e:
-            return {
-                "summary_answer": "Answer summarization failed",
-                "error": f"Answer summarization failed: {str(e)}",
-                "processing_steps": processing_steps + [f"Answer summarization failed: {str(e)}"]
-            }
     
     def _validate_answer(self, state: WHIRAGState) -> Dict[str, Any]:
         """Answer validation node."""

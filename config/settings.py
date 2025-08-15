@@ -11,7 +11,7 @@ class WHIConfig:
     # Alibaba Cloud Qwen configuration
     DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY")
     DASHSCOPE_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    MODEL_NAME = "qwen3-30b-a3b-instruct-2507"
+    MODEL_NAME = "qwen3-30b-a3b-thinking-2507"
     
     # Data file paths - using relative paths
     MESA_DATA_PATH = "./whi_mesa_v2.csv"
